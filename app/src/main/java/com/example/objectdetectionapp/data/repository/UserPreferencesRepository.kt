@@ -46,6 +46,11 @@ class UserPreferencesRepository(
         preferences[UUID_KEY]
     }
 
+    val connectedSurveillanceUUID: Flow<String?> = context.dataStore.data
+        .map { preferences ->
+            preferences[stringPreferencesKey("surveillance_uuid")]
+        }
+
     suspend fun getSavedUserModeAndUUID(): Pair<String?, String?> {
         var mode: String? = null
         var uuid: String? = null

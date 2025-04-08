@@ -32,11 +32,17 @@ fun ModeSelectionScreen(
     )
     val scope = rememberCoroutineScope()
 
-    val mode by viewModel.mode.collectAsState()
-    val uuid by viewModel.uuid.collectAsState()
+    val userSession by viewModel.userSession.collectAsState()
+
+
+    val isLoading = userSession.mode == null && userSession.uuid == null
+
 
     // If mode is already selected, navigate directly
-    LaunchedEffect(mode, uuid) {
+    LaunchedEffect(userSession) {
+        val mode = userSession.mode
+        val uuid = userSession.uuid
+        val connectedSurveillanceUUID = userSession.connectedSurveillanceUUID
         if (!uuid.isNullOrBlank()) {
             when (mode) {
                 "surveillance" -> {
@@ -47,9 +53,16 @@ fun ModeSelectionScreen(
                 }
 
                 "overlooker" -> {
-                    Toast.makeText(context, "Already saved as Overlooker", Toast.LENGTH_SHORT).show()
-                    navController.navigate("overlooker_pair/${uuid}/overlooker") {
-                        popUpTo("mode_selection") { inclusive = true }
+                    if (!connectedSurveillanceUUID.isNullOrBlank()) {
+                        Toast.makeText(context, "Already connected as Overlooker", Toast.LENGTH_SHORT).show()
+                        navController.navigate("overlooker_home/${uuid}/${connectedSurveillanceUUID}") {
+                            popUpTo("mode_selection") { inclusive = true }
+                        }
+                    } else {
+                        Toast.makeText(context, "Already saved as Overlooker", Toast.LENGTH_SHORT).show()
+                        navController.navigate("overlooker_pair/${uuid}/overlooker") {
+                            popUpTo("mode_selection") { inclusive = true }
+                        }
                     }
                 }
             }
@@ -57,7 +70,7 @@ fun ModeSelectionScreen(
     }
 
     // If no mode is saved, show selection screen
-    if (mode == null) {
+    if (!isLoading && userSession.mode == null) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,

@@ -17,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.objectdetectionapp.ui.overlooker.OverlookerHomeScreen
 import com.example.objectdetectionapp.ui.overlooker.OverlookerPairScreen
 import com.example.objectdetectionapp.ui.shared.ModeSelectionScreen
 import com.example.objectdetectionapp.ui.shared.ModeSelectionViewModel
@@ -74,6 +75,16 @@ fun AppNavigator() {
             val uuid = it.arguments?.getString("uuid")
             val mode = it.arguments?.getString("mode")
             OverlookerPairScreen(uuid = uuid, mode = mode,navController)
+        }
+
+        composable("overlooker_home/{overlookerUUID}/{surveillanceUUID}") { backStackEntry ->
+            val overlookerUUID = backStackEntry.arguments?.getString("overlookerUUID") ?: ""
+            val surveillanceUUID = backStackEntry.arguments?.getString("surveillanceUUID") ?: ""
+
+            OverlookerHomeScreen(
+                overlookerUUID = overlookerUUID,
+                surveillanceUUID = surveillanceUUID
+            )
         }
     }
 }
