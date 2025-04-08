@@ -20,15 +20,9 @@ import com.example.objectdetectionapp.ui.shared.ModeSelectionViewModelFactory
 
 @Composable
 fun SurveillanceScreen(
-    navController: NavController
+    uuid: String?,
+    mode: String?
 ) {
-    val context = LocalContext.current
-    val viewModel: ModeSelectionViewModel = viewModel(
-        factory = ModeSelectionViewModelFactory(context)
-    )
-
-    val uuid by viewModel.uuid.collectAsState()
-    val mode by viewModel.mode.collectAsState()
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -39,7 +33,7 @@ fun SurveillanceScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = "Your UUID: $uuid")
-        Text(text = "Your mode: $mode")
+        Text(text = "Your UUID: ${uuid ?: "N/A"}")
+        Text(text = "Your mode: ${mode ?: "N/A"}")
     }
 }

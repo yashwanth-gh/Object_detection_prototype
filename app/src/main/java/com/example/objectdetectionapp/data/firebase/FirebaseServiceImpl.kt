@@ -21,4 +21,29 @@ class FirebaseServiceImpl : FirebaseService {
             throw e
         }
     }
+
+    override suspend fun isValidSurveillanceUUID(uuid: String): Boolean {
+        return try {
+            val snapshot = database.child("surveillance_devices").child(uuid).get().await()
+            snapshot.exists() && snapshot.child("status").value == "active"
+        } catch (e: Exception) {
+            Log.e(_tag, "UUID validation failed: ${e.message}")
+            false
+        }
+    }
+
+    override suspend fun addOverlookerToSurveillance(surveillanceUUID: String, overlookerUUID: String) {
+        try {
+            val path = database.child("surveillance_devices")
+                .child(surveillanceUUID)
+                .child("overlookers")
+                .child(overlookerUUID)
+
+            path.setValue(true).await()
+            Log.d(_tag, "Overlooker $overlookerUUID added under $surveillanceUUID")
+        } catch (e: Exception) {
+            Log.e(_tag, "Failed to add Overlooker: ${e.message}")
+            throw e
+        }
+    }
 }

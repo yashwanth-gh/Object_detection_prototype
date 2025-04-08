@@ -65,4 +65,10 @@ class UserPreferencesRepository(
         saveUserMode(mode, uuid)
     }
 
+    suspend fun saveSurveillanceUUID(surveillanceUUID: String) {
+        context.dataStore.edit { preferences ->
+            preferences[stringPreferencesKey("surveillance_uuid")] = surveillanceUUID
+        }
+    }
+
 }

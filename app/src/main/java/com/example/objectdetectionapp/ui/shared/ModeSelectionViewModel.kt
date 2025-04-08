@@ -1,11 +1,9 @@
 package com.example.objectdetectionapp.ui.shared
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.objectdetectionapp.data.repository.UserPreferencesRepository
-import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -36,49 +34,19 @@ class ModeSelectionViewModel(private val repository: UserPreferencesRepository) 
         }
     }
 
-//    fun setMode(mode: String) {
-//        viewModelScope.launch {
-//            if (mode == "surveillance") {
-//                val newUUID = UUID.randomUUID().toString()
-//
-//                // Save to Firebase
-////                firebaseRef.child("surveillance_devices")
-////                    .child(newUUID)
-////                    .setValue(mapOf("status" to "active"))
-////                    .addOnSuccessListener {
-////                        Log.d(_tag, "UUID $newUUID saved to Firebase")
-////                    }
-////                    .addOnFailureListener { e ->
-////                        Log.e(_tag, "Firebase error: ${e.message}")
-////                    }
-//
-//                // Save to DataStore
-//                repository.saveUserMode(mode, newUUID)
-//                _uuid.value = newUUID
-//            } else {
-//                // Save just the mode
-//                repository.saveUserMode(mode)
-//            }
-//
-//            _mode.value = mode
-//            Log.d(_tag, "Mode set to $mode")
-//        }
-//    }
-
-    fun setMode(mode: String) {
+    fun setMode(mode: String, uuid: String) {
         viewModelScope.launch {
             if (mode == "surveillance") {
-                val newUUID = UUID.randomUUID().toString()
-
                 try {
-                    repository.saveModeWithFirebase(mode, newUUID)
-                    _uuid.value = newUUID
+                    repository.saveModeWithFirebase(mode, uuid)
+                    _uuid.value = uuid
                 } catch (e: Exception) {
                     Log.e(_tag, "Failed to save to Firebase: ${e.message}")
                     return@launch
                 }
             } else {
-                repository.saveUserMode(mode)
+                repository.saveUserMode(mode, uuid)
+                _uuid.value = uuid
             }
 
             _mode.value = mode

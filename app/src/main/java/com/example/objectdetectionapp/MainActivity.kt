@@ -12,9 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.objectdetectionapp.ui.overlooker.OverlookerPairScreen
 import com.example.objectdetectionapp.ui.shared.ModeSelectionScreen
 import com.example.objectdetectionapp.ui.shared.ModeSelectionViewModel
 import com.example.objectdetectionapp.ui.surveillance.SurveillanceScreen
@@ -49,8 +52,28 @@ fun AppNavigator() {
         composable("mode_selection") {
             ModeSelectionScreen(navController)
         }
-        composable("surveillance") {
-            SurveillanceScreen(navController)
+        composable(
+            route = "surveillance/{uuid}/{mode}",
+            arguments = listOf(
+                navArgument("uuid") { type = NavType.StringType },
+                navArgument("mode") { type = NavType.StringType }
+            )
+        ) {
+            val uuid = it.arguments?.getString("uuid")
+            val mode = it.arguments?.getString("mode")
+            SurveillanceScreen(uuid = uuid, mode = mode)
+        }
+
+        composable(
+            route = "overlooker_pair/{uuid}/{mode}",
+            arguments = listOf(
+                navArgument("uuid") { type = NavType.StringType },
+                navArgument("mode") { type = NavType.StringType }
+            )
+        ) {
+            val uuid = it.arguments?.getString("uuid")
+            val mode = it.arguments?.getString("mode")
+            OverlookerPairScreen(uuid = uuid, mode = mode,navController)
         }
     }
 }

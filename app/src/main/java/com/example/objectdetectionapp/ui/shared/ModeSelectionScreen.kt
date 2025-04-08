@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,12 +16,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @Composable
 fun ModeSelectionScreen(
@@ -36,13 +33,25 @@ fun ModeSelectionScreen(
     val scope = rememberCoroutineScope()
 
     val mode by viewModel.mode.collectAsState()
+    val uuid by viewModel.uuid.collectAsState()
 
     // If mode is already selected, navigate directly
-    LaunchedEffect(mode) {
-        if (mode == "surveillance") {
-            navController.navigate("surveillance") {
-                Toast.makeText(context,"already saved",Toast.LENGTH_SHORT).show()
-                popUpTo("mode_selection") { inclusive = true }
+    LaunchedEffect(mode, uuid) {
+        if (!uuid.isNullOrBlank()) {
+            when (mode) {
+                "surveillance" -> {
+                    Toast.makeText(context, "Already saved as Surveillance", Toast.LENGTH_SHORT).show()
+                    navController.navigate("surveillance/${uuid}/surveillance") {
+                        popUpTo("mode_selection") { inclusive = true }
+                    }
+                }
+
+                "overlooker" -> {
+                    Toast.makeText(context, "Already saved as Overlooker", Toast.LENGTH_SHORT).show()
+                    navController.navigate("overlooker_pair/${uuid}/overlooker") {
+                        popUpTo("mode_selection") { inclusive = true }
+                    }
+                }
             }
         }
     }
@@ -61,10 +70,11 @@ fun ModeSelectionScreen(
             Button(onClick = {
 
                 scope.launch {
-                viewModel.setMode("surveillance")
-                navController.navigate("surveillance") {
-                    popUpTo("mode_selection") { inclusive = true }
-                }
+                    val uuid = UUID.randomUUID().toString()
+                    viewModel.setMode("surveillance", uuid)
+                    navController.navigate("surveillance/${uuid}/surveillance"){
+                        popUpTo("mode_selection") { inclusive = true }
+                    }
                 }
             }) {
                 Text(text = "Surveillance Mode")
@@ -73,10 +83,15 @@ fun ModeSelectionScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(onClick = {
-                viewModel.setMode("overlooker")
-                // Navigation for Overlooker mode will be handled later
+                scope.launch {
+                    val uuid = UUID.randomUUID().toString()
+                    viewModel.setMode("overlooker", uuid)
+                    navController.navigate("overlooker_pair/${uuid}/overlooker") {
+                        popUpTo("mode_selection") { inclusive = true }
+                    }
+                }
             }) {
-                Text(text = "Overlooker Mode (Coming Soon)")
+                Text(text = "Overlooker Mode")
             }
         }
     }
