@@ -70,7 +70,7 @@ fun ModeSelectionScreen(
     }
 
     // If no mode is saved, show selection screen
-    if (!isLoading && userSession.mode == null) {
+    if (userSession.mode == null || userSession.uuid == null) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
