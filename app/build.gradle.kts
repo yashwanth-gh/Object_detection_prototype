@@ -46,6 +46,7 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/DEPENDENCIES"
         }
     }
 }
@@ -88,4 +89,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     implementation("androidx.datastore:datastore-preferences:1.1.3")
+
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.18.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
 }

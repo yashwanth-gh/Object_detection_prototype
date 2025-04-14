@@ -1,5 +1,8 @@
 package com.example.objectdetectionapp
 
+import android.content.pm.PackageManager
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -10,6 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -26,8 +31,24 @@ import com.example.objectdetectionapp.ui.surveillance.SurveillanceViewModel
 import com.example.objectdetectionapp.ui.theme.ObjectDetectionAppTheme
 
 class MainActivity : ComponentActivity() {
+    private val REQUEST_NOTIFICATION_PERMISSION = 123
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Request notification permission for Android 13 and above
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    REQUEST_NOTIFICATION_PERMISSION
+                )
+            }
+        }
         setContent {
             ObjectDetectionAppTheme {
                 // A surface container using the 'background' color from the theme
@@ -37,6 +58,22 @@ class MainActivity : ComponentActivity() {
                 ) {
                     AppNavigator()
                 }
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+        deviceId: Int
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions as Array<String>, grantResults)
+        if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, you can proceed with sending notifications
+            } else {
+                // Permission denied, handle accordingly (e.g., show a message to the user)
             }
         }
     }
@@ -74,7 +111,7 @@ fun AppNavigator() {
         ) {
             val uuid = it.arguments?.getString("uuid")
             val mode = it.arguments?.getString("mode")
-            OverlookerPairScreen(uuid = uuid, mode = mode,navController)
+            OverlookerPairScreen(uuid = uuid, mode = mode, navController)
         }
 
         composable("overlooker_home/{overlookerUUID}/{surveillanceUUID}") { backStackEntry ->

@@ -28,44 +28,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.objectdetectionapp.data.firebase.FirebaseServiceImpl
+import com.example.objectdetectionapp.data.firebase.PushTokenManager
 import com.example.objectdetectionapp.data.repository.UserPreferencesRepository
 import com.example.objectdetectionapp.ui.shared.ModeSelectionViewModel
 import com.example.objectdetectionapp.ui.shared.ModeSelectionViewModelFactory
-
-/*
-@Composable
-fun OverlookerPairScreen(uuid: String?, mode: String?) {
-    var surveillanceUUID by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("Mode: $mode", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("Your UUID: $uuid", fontSize = 16.sp)
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        OutlinedTextField(
-            value = surveillanceUUID,
-            onValueChange = { surveillanceUUID = it },
-            label = { Text("Enter Surveillance UUID") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(onClick = {
-            // Show toast or future navigation logic
-        }) {
-            Text("Connect (TODO)")
-        }
-    }
-}*/
 
 
 @Composable
@@ -89,12 +55,13 @@ fun OverlookerPairScreen(
     val pairingState by viewModel.pairingState.collectAsState()
 
     // Handle result feedback
-    LaunchedEffect(pairingState) {
+    LaunchedEffect(pairingState,surveillanceUUID) {
         when (pairingState) {
             is OverlookerPairViewModel.PairingState.Success -> {
                 Toast.makeText(context, "Connected successfully!", Toast.LENGTH_SHORT).show()
+                uuid?.let { PushTokenManager.saveTokenToDatabase(it) }
                 // Navigate to next screen
-                // navController.navigate("next_screen_route") // TODO: Replace with actual route
+                 navController.navigate("overlooker_home/${uuid}/${surveillanceUUID}")
             }
 
             is OverlookerPairViewModel.PairingState.Error -> {
