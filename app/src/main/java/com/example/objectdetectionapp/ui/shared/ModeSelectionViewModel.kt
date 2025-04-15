@@ -3,6 +3,7 @@ package com.example.objectdetectionapp.ui.shared
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.objectdetectionapp.data.firebase.PushTokenManager
 import com.example.objectdetectionapp.data.models.UserSessionData
 import com.example.objectdetectionapp.data.repository.UserPreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,17 +16,17 @@ import java.util.UUID
 class ModeSelectionViewModel(private val repository: UserPreferencesRepository) : ViewModel() {
 
 
-/*    private val _mode = MutableStateFlow<String?>(null)
-    val mode = _mode.asStateFlow()
+    /*    private val _mode = MutableStateFlow<String?>(null)
+        val mode = _mode.asStateFlow()
 
-    private val _uuid = MutableStateFlow<String?>(null)
-    val uuid = _uuid.asStateFlow()*/
+        private val _uuid = MutableStateFlow<String?>(null)
+        val uuid = _uuid.asStateFlow()*/
 
     private val _userSession = MutableStateFlow(UserSessionData(null, null, null))
     val userSession: StateFlow<UserSessionData> = _userSession.asStateFlow()
 
 
-//    private val firebaseRef = FirebaseDatabase.getInstance().reference
+    //    private val firebaseRef = FirebaseDatabase.getInstance().reference
     private val _tag = "ModeSelectionVM"
 
     init {
@@ -45,17 +46,29 @@ class ModeSelectionViewModel(private val repository: UserPreferencesRepository) 
 
     fun setMode(mode: String, uuid: String) {
         viewModelScope.launch {
-            if (mode == "surveillance") {
-                try {
+
+            try {
+                if (mode == "surveillance") {
                     repository.saveModeWithFirebase(mode, uuid)
-                } catch (e: Exception) {
-                    Log.e(_tag, "Failed to save to Firebase: ${e.message}")
-                    return@launch
+                } else {
+                    repository.saveUserMode(mode, uuid)
                 }
-            } else {
-                repository.saveUserMode(mode, uuid)
+            } catch (e: Exception) {
+                Log.e(_tag, "Failed to save to Firebase: ${e.message}")
+                return@launch
             }
-            // State will automatically update via flow
+
+            saveFCMTokenToDB(uuid)
+
+        }
+    }
+
+    fun saveFCMTokenToDB(uuid: String) {
+        try {
+            Log.d(_tag, "saveFCMTokenToDB triggered")
+            PushTokenManager.saveTokenToDatabase(uuid)
+        } catch (e: Exception) {
+            Log.e(_tag, "Error saving fcm token: ${e.message}")
         }
     }
 }

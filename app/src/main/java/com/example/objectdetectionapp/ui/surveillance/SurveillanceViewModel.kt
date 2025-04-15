@@ -63,8 +63,7 @@ class SurveillanceViewModel(
                         fcmService.sendNotificationToToken(
                             token = fcmToken,
                             title = "Alert from Surveillance",
-                            body = "This device says hi 👋",
-                            surveillanceUUID = surveillanceUUID
+                            body = "Hi you are connected to :\nUUID: $surveillanceUUID"
                         )
                     }
                 }

@@ -28,8 +28,7 @@ class FCMService(private val context: Context) {
     suspend fun sendNotificationToToken(
         token: String,
         title: String,
-        body: String,
-        surveillanceUUID: String
+        body: String
     ) = withContext(Dispatchers.IO) { // Switch to IO dispatcher for network operations
         try {
             credentials.refreshIfExpired() // Ensure token is fresh before making network request.
@@ -40,7 +39,7 @@ class FCMService(private val context: Context) {
                     put("token", token)
                     put("notification", JSONObject().apply {
                         put("title", title)
-                        put("body", "$body\nUUID: $surveillanceUUID")
+                        put("body", body)
                     })
                 })
             }

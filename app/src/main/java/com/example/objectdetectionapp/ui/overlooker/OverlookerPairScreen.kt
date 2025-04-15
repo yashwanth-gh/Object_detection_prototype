@@ -1,5 +1,6 @@
 package com.example.objectdetectionapp.ui.overlooker
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,43 +30,49 @@ import androidx.navigation.NavController
 import com.example.objectdetectionapp.data.firebase.FirebaseServiceImpl
 import com.example.objectdetectionapp.data.firebase.PushTokenManager
 import com.example.objectdetectionapp.data.repository.UserPreferencesRepository
-import com.example.objectdetectionapp.ui.shared.ModeSelectionViewModel
-import com.example.objectdetectionapp.ui.shared.ModeSelectionViewModelFactory
 
 
 @Composable
 fun OverlookerPairScreen(
-    uuid: String?,        // Overlooker UUID
-    mode: String?,        // Mode = "overlooker"
+    uuid: String?,
+    mode: String?,
     navController: NavController
 ) {
     val context = LocalContext.current
-
-    // Instantiate ViewModel with factory
     val viewModel: OverlookerPairViewModel = viewModel(
         factory = OverlookerPairViewModelFactory(
             firebaseService = FirebaseServiceImpl(),
             userPreferencesRepository = UserPreferencesRepository(context, FirebaseServiceImpl()),
-            overlookerUUID = uuid ?: ""
+            overlookerUUID = uuid.orEmpty()
         )
     )
 
     var surveillanceUUID by remember { mutableStateOf("") }
     val pairingState by viewModel.pairingState.collectAsState()
 
-    // Handle result feedback
-    LaunchedEffect(pairingState,surveillanceUUID) {
+    LaunchedEffect(pairingState, surveillanceUUID, uuid) {
         when (pairingState) {
             is OverlookerPairViewModel.PairingState.Success -> {
+
+                Log.d("OverlookerPairScreen", "Pairing succeeded. Proceeding to next steps.")
+
+
+                if (uuid != null) {
+                    Log.d(
+                        "OverlookerPairScreen",
+                        "attempting to send notification to surveillance device"
+                    )
+                    viewModel.sendNotificationToSurveillance(context, surveillanceUUID, uuid)
+                }
+
                 Toast.makeText(context, "Connected successfully!", Toast.LENGTH_SHORT).show()
-                uuid?.let { PushTokenManager.saveTokenToDatabase(it) }
-                // Navigate to next screen
-                 navController.navigate("overlooker_home/${uuid}/${surveillanceUUID}")
+                navController.navigate("overlooker_home/${uuid}/${surveillanceUUID}")
             }
 
             is OverlookerPairViewModel.PairingState.Error -> {
                 val error = (pairingState as OverlookerPairViewModel.PairingState.Error).message
-                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                Log.e("OverlookerPairScreen", "Pairing error: $error")
+                Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
             }
 
             else -> Unit
@@ -97,6 +103,7 @@ fun OverlookerPairScreen(
 
         Button(
             onClick = {
+                Log.d("OverlookerPairScreen", "Connect button clicked")
                 viewModel.pairWithSurveillanceDevice(surveillanceUUID.trim())
             },
             modifier = Modifier.fillMaxWidth(),

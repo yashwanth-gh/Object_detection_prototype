@@ -9,13 +9,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -25,9 +22,7 @@ import androidx.navigation.navArgument
 import com.example.objectdetectionapp.ui.overlooker.OverlookerHomeScreen
 import com.example.objectdetectionapp.ui.overlooker.OverlookerPairScreen
 import com.example.objectdetectionapp.ui.shared.ModeSelectionScreen
-import com.example.objectdetectionapp.ui.shared.ModeSelectionViewModel
 import com.example.objectdetectionapp.ui.surveillance.SurveillanceScreen
-import com.example.objectdetectionapp.ui.surveillance.SurveillanceViewModel
 import com.example.objectdetectionapp.ui.theme.ObjectDetectionAppTheme
 
 class MainActivity : ComponentActivity() {

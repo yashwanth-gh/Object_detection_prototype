@@ -85,6 +85,7 @@ fun ModeSelectionScreen(
                 scope.launch {
                     val uuid = UUID.randomUUID().toString()
                     viewModel.setMode("surveillance", uuid)
+//                    viewModel.saveFCMTokenToDB(uuid)
                     navController.navigate("surveillance/${uuid}/surveillance"){
                         popUpTo("mode_selection") { inclusive = true }
                     }
@@ -99,6 +100,7 @@ fun ModeSelectionScreen(
                 scope.launch {
                     val uuid = UUID.randomUUID().toString()
                     viewModel.setMode("overlooker", uuid)
+//                    viewModel.saveFCMTokenToDB(uuid)
                     navController.navigate("overlooker_pair/${uuid}/overlooker") {
                         popUpTo("mode_selection") { inclusive = true }
                     }
