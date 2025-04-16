@@ -18,7 +18,8 @@ import kotlinx.coroutines.tasks.await
 class OverlookerPairViewModel(
     private val overlookerUUID: String,
     private val pairUseCase: PairOverlookerWithSurveillanceUseCase,
-    private val notificationRepository:NotificationRepository
+    private val notificationRepository:NotificationRepository,
+    private val userPreferencesRepository:UserPreferencesRepository
 ) : ViewModel() {
 
     sealed class PairingState {
@@ -31,13 +32,26 @@ class OverlookerPairViewModel(
     private val _pairingState = MutableStateFlow<PairingState>(PairingState.Idle)
     val pairingState: StateFlow<PairingState> = _pairingState
 
-    fun pairWithSurveillanceDevice(surveillanceUUID: String) {
+    private val _surveillanceUUID = MutableStateFlow<String>("")
+    val surveillanceUUID: StateFlow<String> = _surveillanceUUID
+
+    fun pairWithSurveillanceDevice(pairingCode: String) {
         viewModelScope.launch {
             _pairingState.value = PairingState.Loading
 
-            val result = pairUseCase.execute(surveillanceUUID, overlookerUUID)
+            // call and get full uuid from getFullUUIDFromPairingCode make sure it is not null
+            // Fetch full UUID using the pairing code
+            val fullUUID = userPreferencesRepository.getFullUUIDFromPairingCode(pairingCode)
+
+            if (fullUUID == null) {
+                _pairingState.value = PairingState.Error("Invalid pairing code or failed to fetch UUID.")
+                return@launch
+            }
+
+            val result = pairUseCase.execute(fullUUID, overlookerUUID)
 
             _pairingState.value = if (result.isSuccess) {
+                _surveillanceUUID.value = fullUUID // Store the full UUID for navigation
                 PairingState.Success
             } else {
                 PairingState.Error(result.exceptionOrNull()?.message ?: "Unknown error")

@@ -12,9 +12,17 @@ class FirebaseServiceImpl : FirebaseService {
 
     override suspend fun saveSurveillanceDevice(uuid: String) {
         try {
+            // Generate the pairing code from the first 6 characters of the UUID (you can adjust this)
+            val pairingCode = uuid.take(6)
+
+            // Save the Surveillance device data, including pairing code
+            val deviceData = mapOf(
+                "status" to "active",
+                "pairingCode" to pairingCode
+            )
             database.child("surveillance_devices")
                 .child(uuid)
-                .setValue(mapOf("status" to "active"))
+                .setValue(deviceData)
                 .await()
             Log.d(_tag, "UUID $uuid saved to Firebase")
 
@@ -99,6 +107,35 @@ class FirebaseServiceImpl : FirebaseService {
             .await()
 
         return snapshot.getValue(String::class.java)
+    }
+
+    override suspend fun fetchFullSurveillanceUUID(pairingCode: String): String? {
+        return try {
+            // Query Firebase to fetch the full UUID using the pairing code
+            val snapshot = database
+                .child("surveillance_devices")
+                .orderByChild("pairingCode")
+                .equalTo(pairingCode)
+                .get()
+                .await()
+
+            // Check if the snapshot has data
+            if (snapshot.exists()) {
+                // Get the full UUID (assuming the pairingCode is unique)
+                val uuid = snapshot.children.firstOrNull()?.key
+                if (uuid != null) {
+                    return uuid
+                } else {
+                    Log.e("fetchFullSurveillanceUUID", "No UUID found for pairing code: $pairingCode")
+                    null
+                }
+            } else {
+                null // Return null if no device is found with the given pairing code
+            }
+        } catch (e: Exception) {
+            Log.e("fetchFullSurveillanceUUID", "Error fetching full UUID: ${e.message}")
+            null
+        }
     }
 
 }

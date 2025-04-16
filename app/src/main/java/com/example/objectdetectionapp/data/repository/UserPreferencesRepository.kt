@@ -99,6 +99,18 @@ class UserPreferencesRepository(
         }
     }
 
+    suspend fun getFullUUIDFromPairingCode(pairingCode: String): String?{
+        return try {
+            // Retry fetching the UUID based on the pairing code
+            retryOperation(maxAttempts = 3, delayMillis = 1500, operationName = "Get Full UUID") {
+                firebaseService.fetchFullSurveillanceUUID(pairingCode)
+            }
+        } catch (e: Exception) {
+            Log.e("UserPrefsRepo", "Error fetching full UUID for pairing code: ${e.message}")
+            null
+        }
+    }
+
 
 
 }

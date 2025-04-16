@@ -51,32 +51,24 @@ fun OverlookerPairScreen(
     val viewModel: OverlookerPairViewModel = viewModel(
         factory = OverlookerPairViewModelFactory(
             context,
-            firebaseService = FirebaseServiceImpl(),
-            userPreferencesRepository = UserPreferencesRepository(context, FirebaseServiceImpl()),
             overlookerUUID = overlookerUUID.orEmpty()
         )
     )
 
-    var surveillanceUUID by remember { mutableStateOf("") }
+    var pairingCode by remember { mutableStateOf("") }
     val pairingState by viewModel.pairingState.collectAsState()
+    val surveillanceUUID by viewModel.surveillanceUUID.collectAsState()
 
-    LaunchedEffect(pairingState, surveillanceUUID, overlookerUUID) {
+    LaunchedEffect(pairingState, pairingCode, overlookerUUID) {
         NavigationStateHandler.stopNavigation()
         when (pairingState) {
             is OverlookerPairViewModel.PairingState.Success -> {
-
                 Log.d("OverlookerPairScreen", "Pairing succeeded. Proceeding to next steps.")
 
-
                 if (overlookerUUID != null) {
-                    Log.d(
-                        "OverlookerPairScreen",
-                        "attempting to send notification to surveillance device"
-                    )
+                    Log.d("OverlookerPairScreen", "Attempting to send notification to surveillance device")
                     scope.launch {
-                        viewModel.notifySurveillanceOfPairing(
-                            surveillanceUUID
-                        )
+                        viewModel.notifySurveillanceOfPairing(surveillanceUUID)
                     }
                 }
 
@@ -103,7 +95,6 @@ fun OverlookerPairScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
@@ -153,21 +144,27 @@ fun OverlookerPairScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedTextField(
-            value = surveillanceUUID,
-            onValueChange = { surveillanceUUID = it },
-            label = { Text("Surveillance ID") },
+            value = pairingCode,
+            onValueChange = { pairingCode = it },
+            label = { Text("Surveillance Pairing Code") },
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp)),
-            singleLine = true
+            singleLine = true,
+            isError = pairingCode.length != 6
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = {
-                scope.launch { viewModel.pairWithSurveillanceDevice(surveillanceUUID.trim())  }
-
+                if (pairingCode.length == 6) {
+                    scope.launch {
+                        viewModel.pairWithSurveillanceDevice(pairingCode.trim())
+                    }
+                } else {
+                    Toast.makeText(context, "Invalid pairing code. Please enter a 6-character code.", Toast.LENGTH_SHORT).show()
+                }
             },
             modifier = Modifier
                 .height(56.dp)

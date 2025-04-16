@@ -7,4 +7,5 @@ interface FirebaseService {
     suspend fun getTokenAndSaveToDatabase(uuid: String)
     suspend fun getOverlookerFCMTokens(surveillanceUUID: String): List<String>
     suspend fun getSurveillanceFCMToken(surveillanceUUID: String): String?
+    suspend fun fetchFullSurveillanceUUID(pairingCode: String): String?
 }

@@ -1,5 +1,6 @@
 package com.example.objectdetectionapp.ui.surveillance
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +15,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,6 +43,8 @@ fun SurveillanceScreen(
         factory = SurveillanceViewModelFactory(context)
     )
 
+    var showPairingCode by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         NavigationStateHandler.stopNavigation()
     }
@@ -56,21 +62,13 @@ fun SurveillanceScreen(
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "this device's mode",
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.sp,
-            color = Color.DarkGray
+            text = "Status: •Active",
+            fontSize = 16.sp,
+            color = Color(0xFF4CAF50), // greenish for success
+            fontWeight = FontWeight.Medium
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = mode ?: "N/A",
-            fontSize = 13.sp,
-            color = Color.Gray
-        )
-
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
@@ -85,15 +83,37 @@ fun SurveillanceScreen(
             fontSize = 13.sp,
             color = Color.Gray
         )
+        Spacer(modifier = Modifier.height(10.dp))
 
-        Spacer(modifier = Modifier.height(32.dp))
 
+        if (showPairingCode && uuid != null) {
+            Text(
+                text = uuid.take(6),
+                fontSize = 28.sp, // Larger than typical title size
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text(
+            text = if (showPairingCode) "Hide Pairing Code" else "Show Pairing Code",
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier
+                .clickable { showPairingCode = !showPairingCode }
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
         Button(
             onClick = {
                 scope.launch {
                     uuid?.let {
                         viewModel.notifyOverlookers(surveillanceUUID = it)
-                    }  }
+                    }
+                }
 
             },
             modifier = Modifier.fillMaxWidth(),
