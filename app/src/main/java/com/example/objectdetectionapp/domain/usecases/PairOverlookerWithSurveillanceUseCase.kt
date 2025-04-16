@@ -16,7 +16,7 @@ class PairOverlookerWithSurveillanceUseCase(
             // Save Surveillance UUID in DataStore
             //userPreferencesRepository.saveUserMode("overlooker", overlookerUUID)
             // Save Surveillance UUID separately
-            userPreferencesRepository.saveSurveillanceUUID(surveillanceUUID)
+            userPreferencesRepository.saveSurveillanceUUIDToDatastore(surveillanceUUID)
 
             // Link this Overlooker to Surveillance device
             firebaseService.addOverlookerToSurveillance(surveillanceUUID, overlookerUUID)

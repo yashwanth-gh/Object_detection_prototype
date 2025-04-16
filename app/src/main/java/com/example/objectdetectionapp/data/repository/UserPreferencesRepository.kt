@@ -6,10 +6,9 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.objectdetectionapp.data.firebase.FirebaseService
-import kotlinx.coroutines.delay
+import com.example.objectdetectionapp.data.firebase.PushTokenManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 
 private val Context.dataStore by preferencesDataStore(name = "user_prefs")
 
@@ -23,17 +22,6 @@ class UserPreferencesRepository(
         private val MODE_KEY = stringPreferencesKey("mode")  // "surveillance" or "overlooker"
         private val UUID_KEY = stringPreferencesKey("uuid")  // Stores UUID if mode = surveillance
         private const val TAG = "UserPrefsRepo" // Add a TAG for Log messages
-    }
-
-    // Save mode and UUID
-    suspend fun saveUserMode(mode: String, uuid: String? = null) {
-        Log.d(TAG, "Saving user mode: mode=$mode, uuid=$uuid")
-        context.dataStore.edit { preferences ->
-            preferences[MODE_KEY] = mode
-            if (uuid != null) {
-                preferences[UUID_KEY] = uuid
-            }
-        }
     }
 
     // Get saved mode
@@ -51,7 +39,29 @@ class UserPreferencesRepository(
             preferences[stringPreferencesKey("surveillance_uuid")]
         }
 
-    suspend fun getSavedUserModeAndUUID(): Pair<String?, String?> {
+    // Save mode and UUID
+    suspend fun saveUserModeAndUUIDToDatastore(mode: String, uuid: String? = null) {
+        Log.d(TAG, "Saving user mode: mode=$mode, uuid=$uuid")
+        context.dataStore.edit { preferences ->
+            preferences[MODE_KEY] = mode
+            if (uuid != null) {
+                preferences[UUID_KEY] = uuid
+            }
+        }
+
+        if (uuid != null) {
+            Log.d(TAG, "Calling saveFCMTokenToFirebase for $uuid")
+            saveFCMTokenToFirebase(uuid)
+        }
+    }
+
+    suspend fun saveSurveillanceUUIDToDatastore(surveillanceUUID: String) {
+        context.dataStore.edit { preferences ->
+            preferences[stringPreferencesKey("surveillance_uuid")] = surveillanceUUID
+        }
+    }
+
+    suspend fun getSavedUserModeAndUUIDFromDatastore(): Pair<String?, String?> {
         var mode: String? = null
         var uuid: String? = null
 
@@ -65,15 +75,20 @@ class UserPreferencesRepository(
         return Pair(mode, uuid)
     }
 
-    suspend fun saveModeWithFirebase(mode: String, uuid: String) {
+    suspend fun saveModeAndUUIDToFirebase(mode: String, uuid: String) {
         firebaseService.saveSurveillanceDevice(uuid)
-        saveUserMode(mode, uuid)
+        saveUserModeAndUUIDToDatastore(mode, uuid)
     }
 
-    suspend fun saveSurveillanceUUID(surveillanceUUID: String) {
-        context.dataStore.edit { preferences ->
-            preferences[stringPreferencesKey("surveillance_uuid")] = surveillanceUUID
+    private suspend fun saveFCMTokenToFirebase(uuid: String) {
+        try {
+            Log.d(TAG, "saveFCMTokenToFirebase triggered")
+            firebaseService.getTokenAndSaveToDatabase(uuid)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error saving fcm token: ${e.message}")
         }
     }
+
+
 
 }

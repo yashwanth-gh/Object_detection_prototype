@@ -5,8 +5,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -72,42 +76,70 @@ fun ModeSelectionScreen(
     // If no mode is saved, show selection screen
     if (userSession.mode == null || userSession.uuid == null) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "Select Mode")
+            Text(
+                text = "Welcome!",
+                style = MaterialTheme.typography.headlineLarge
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Please select your device mode to continue",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            ModeButton(
+                label = "Surveillance Mode",
+                onClick = {
+                    scope.launch {
+                        val uuid = UUID.randomUUID().toString()
+                        viewModel.setMode("surveillance", uuid)
+                        navController.navigate("surveillance/$uuid/surveillance") {
+                            popUpTo("mode_selection") { inclusive = true }
+                        }
+                    }
+                }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(onClick = {
-
-                scope.launch {
-                    val uuid = UUID.randomUUID().toString()
-                    viewModel.setMode("surveillance", uuid)
-//                    viewModel.saveFCMTokenToDB(uuid)
-                    navController.navigate("surveillance/${uuid}/surveillance"){
-                        popUpTo("mode_selection") { inclusive = true }
+            ModeButton(
+                label = "Overlooker Mode",
+                onClick = {
+                    scope.launch {
+                        val uuid = UUID.randomUUID().toString()
+                        viewModel.setMode("overlooker", uuid)
+                        navController.navigate("overlooker_pair/$uuid/overlooker") {
+                            popUpTo("mode_selection") { inclusive = true }
+                        }
                     }
                 }
-            }) {
-                Text(text = "Surveillance Mode")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(onClick = {
-                scope.launch {
-                    val uuid = UUID.randomUUID().toString()
-                    viewModel.setMode("overlooker", uuid)
-//                    viewModel.saveFCMTokenToDB(uuid)
-                    navController.navigate("overlooker_pair/${uuid}/overlooker") {
-                        popUpTo("mode_selection") { inclusive = true }
-                    }
-                }
-            }) {
-                Text(text = "Overlooker Mode")
-            }
+            )
         }
+    }
+}
+
+@Composable
+fun ModeButton(
+    label: String,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .height(56.dp)
+            .fillMaxWidth(0.8f),
+        shape = RoundedCornerShape(10.dp)
+    ) {
+        Text(text = label, style = MaterialTheme.typography.labelLarge)
     }
 }

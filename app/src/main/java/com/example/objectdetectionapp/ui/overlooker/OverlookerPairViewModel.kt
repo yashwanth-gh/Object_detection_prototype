@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.objectdetectionapp.data.firebase.FCMService
 import com.example.objectdetectionapp.data.firebase.FirebaseService
+import com.example.objectdetectionapp.data.repository.NotificationRepository
 import com.example.objectdetectionapp.data.repository.UserPreferencesRepository
 import com.example.objectdetectionapp.domain.usecases.PairOverlookerWithSurveillanceUseCase
 import com.google.firebase.database.FirebaseDatabase
@@ -16,7 +17,8 @@ import kotlinx.coroutines.tasks.await
 
 class OverlookerPairViewModel(
     private val overlookerUUID: String,
-    private val pairUseCase: PairOverlookerWithSurveillanceUseCase
+    private val pairUseCase: PairOverlookerWithSurveillanceUseCase,
+    private val notificationRepository:NotificationRepository
 ) : ViewModel() {
 
     sealed class PairingState {
@@ -43,40 +45,16 @@ class OverlookerPairViewModel(
         }
     }
 
-    fun sendNotificationToSurveillance(
-        context: Context,
-        surveillanceUUID: String,
-        overlookerUUID: String
-    ) {
+
+    fun notifySurveillanceOfPairing(surveillanceUUID: String) {
         viewModelScope.launch {
             try {
-                Log.d("OverlookerVM", "Attempting to send notification to $surveillanceUUID")
-
-                val fcmService = FCMService(context)
-
-                val tokenSnap = FirebaseDatabase.getInstance()
-                    .getReference("fcm_tokens/$surveillanceUUID")
-                    .get().await()
-
-                val fcmToken = tokenSnap.getValue(String::class.java)
-
-                if (!fcmToken.isNullOrEmpty()) {
-                    Log.d("OverlookerVM", "FCM token found: $fcmToken")
-
-                    fcmService.sendNotificationToToken(
-                        token = fcmToken,
-                        title = "You are Paired! 🔗",
-                        body = "Hi, you are connected to:\nUUID: $overlookerUUID"
-                    )
-
-                    Log.d("OverlookerVM", "Notification sent successfully.")
-
-                } else {
-                    Log.w("OverlookerVM", "FCM token is null or empty for UUID: $surveillanceUUID")
-                }
-
+                notificationRepository.sendPairingNotificationToSurveillance(
+                    surveillanceUUID,
+                    overlookerUUID
+                )
             } catch (e: Exception) {
-                Log.e("OverlookerVM", "Error sending notification: ${e.message}", e)
+                Log.e("OverlookerVM", "Notification error: ${e.message}", e)
             }
         }
     }

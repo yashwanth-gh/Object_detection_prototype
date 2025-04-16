@@ -106,7 +106,7 @@ fun AppNavigator() {
         ) {
             val uuid = it.arguments?.getString("uuid")
             val mode = it.arguments?.getString("mode")
-            OverlookerPairScreen(uuid = uuid, mode = mode, navController)
+            OverlookerPairScreen(overlookerUUID = uuid, mode = mode, navController)
         }
 
         composable("overlooker_home/{overlookerUUID}/{surveillanceUUID}") { backStackEntry ->
