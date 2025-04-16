@@ -11,6 +11,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.objectdetectionapp.ui.shared.NavigationStateHandler
 import kotlinx.coroutines.launch
 
 @Composable
@@ -36,6 +38,10 @@ fun SurveillanceScreen(
     val viewModel: SurveillanceViewModel = viewModel(
         factory = SurveillanceViewModelFactory(context)
     )
+
+    LaunchedEffect(Unit) {
+        NavigationStateHandler.stopNavigation()
+    }
 
     Column(
         modifier = Modifier

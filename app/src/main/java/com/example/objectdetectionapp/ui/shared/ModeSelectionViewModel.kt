@@ -22,6 +22,9 @@ class ModeSelectionViewModel(private val repository: UserPreferencesRepository) 
 
     private val _tag = "ModeSelectionVM"
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     init {
         viewModelScope.launch {
             combine(
@@ -32,6 +35,7 @@ class ModeSelectionViewModel(private val repository: UserPreferencesRepository) 
                 UserSessionData(mode, uuid, connectedUUID)
             }.collect { session ->
                 _userSession.value = session
+                _isLoading.value = false // ✅ loading completed
                 Log.d(_tag, "UserSession loaded: $session")
             }
         }

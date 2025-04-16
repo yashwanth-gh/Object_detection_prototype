@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.objectdetectionapp.data.firebase.FirebaseService
 import com.example.objectdetectionapp.data.firebase.PushTokenManager
+import com.example.objectdetectionapp.utils.retryOperation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -83,7 +84,16 @@ class UserPreferencesRepository(
     private suspend fun saveFCMTokenToFirebase(uuid: String) {
         try {
             Log.d(TAG, "saveFCMTokenToFirebase triggered")
-            firebaseService.getTokenAndSaveToDatabase(uuid)
+
+            retryOperation(
+                maxAttempts = 3,
+                delayMillis = 1500,
+                operationName = "SaveFCMToken"
+            ) {
+                firebaseService.getTokenAndSaveToDatabase(uuid)
+            }
+
+            Log.d(TAG, "✅ Token saved after retry logic (if needed)")
         } catch (e: Exception) {
             Log.e(TAG, "Error saving fcm token: ${e.message}")
         }

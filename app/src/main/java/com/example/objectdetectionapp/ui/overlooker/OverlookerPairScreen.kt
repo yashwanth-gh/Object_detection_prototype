@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.objectdetectionapp.data.firebase.FirebaseServiceImpl
 import com.example.objectdetectionapp.data.repository.UserPreferencesRepository
+import com.example.objectdetectionapp.ui.shared.NavigationStateHandler
 import kotlinx.coroutines.launch
 
 
@@ -60,6 +61,7 @@ fun OverlookerPairScreen(
     val pairingState by viewModel.pairingState.collectAsState()
 
     LaunchedEffect(pairingState, surveillanceUUID, overlookerUUID) {
+        NavigationStateHandler.stopNavigation()
         when (pairingState) {
             is OverlookerPairViewModel.PairingState.Success -> {
 
@@ -79,7 +81,9 @@ fun OverlookerPairScreen(
                 }
 
                 Toast.makeText(context, "Connected successfully!", Toast.LENGTH_SHORT).show()
+                NavigationStateHandler.startNavigation()
                 navController.navigate("overlooker_home/${overlookerUUID}/${surveillanceUUID}")
+                NavigationStateHandler.stopNavigation()
             }
 
             is OverlookerPairViewModel.PairingState.Error -> {
