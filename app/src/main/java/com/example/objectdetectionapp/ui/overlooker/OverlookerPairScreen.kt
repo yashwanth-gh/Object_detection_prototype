@@ -34,9 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.objectdetectionapp.data.firebase.FirebaseServiceImpl
-import com.example.objectdetectionapp.data.repository.UserPreferencesRepository
-import com.example.objectdetectionapp.ui.shared.NavigationStateHandler
+import com.example.objectdetectionapp.ui.components.NavigateWithPermissionAndLoading
 import kotlinx.coroutines.launch
 
 
@@ -58,24 +56,21 @@ fun OverlookerPairScreen(
     var pairingCode by remember { mutableStateOf("") }
     val pairingState by viewModel.pairingState.collectAsState()
     val surveillanceUUID by viewModel.surveillanceUUID.collectAsState()
+    var shouldNavigate by remember { mutableStateOf(false) }
 
-    LaunchedEffect(pairingState, pairingCode, overlookerUUID) {
-        NavigationStateHandler.stopNavigation()
+
+    LaunchedEffect(pairingState) {
         when (pairingState) {
             is OverlookerPairViewModel.PairingState.Success -> {
-                Log.d("OverlookerPairScreen", "Pairing succeeded. Proceeding to next steps.")
-
+                Log.d("OverlookerPairScreen", "Pairing succeeded.")
                 if (overlookerUUID != null) {
-                    Log.d("OverlookerPairScreen", "Attempting to send notification to surveillance device")
+                    Log.d("OverlookerPairScreen", "Notifying surveillance device...")
                     scope.launch {
                         viewModel.notifySurveillanceOfPairing(surveillanceUUID)
                     }
                 }
-
                 Toast.makeText(context, "Connected successfully!", Toast.LENGTH_SHORT).show()
-                NavigationStateHandler.startNavigation()
-                navController.navigate("overlooker_home/${overlookerUUID}/${surveillanceUUID}")
-                NavigationStateHandler.stopNavigation()
+                shouldNavigate = true // Trigger navigation
             }
 
             is OverlookerPairViewModel.PairingState.Error -> {
@@ -87,6 +82,13 @@ fun OverlookerPairScreen(
             else -> Unit
         }
     }
+
+    NavigateWithPermissionAndLoading(
+        shouldNavigate = shouldNavigate,
+        onNavigated = { shouldNavigate = false }, // Reset navigation flag
+        destination = "overlooker_home/${overlookerUUID}/${surveillanceUUID}",
+        navController = navController
+    )
 
     Column(
         modifier = Modifier

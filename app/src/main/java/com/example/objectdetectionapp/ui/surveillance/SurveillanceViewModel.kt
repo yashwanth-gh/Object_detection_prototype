@@ -1,26 +1,20 @@
 package com.example.objectdetectionapp.ui.surveillance
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.objectdetectionapp.data.firebase.FCMService
 import com.example.objectdetectionapp.data.repository.NotificationRepository
 import com.example.objectdetectionapp.data.repository.UserPreferencesRepository
-import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 class SurveillanceViewModel(
     private val repository: UserPreferencesRepository,
     private val notificationRepository: NotificationRepository
 ) : ViewModel() {
 
-    var savedMode: String? = null
-        private set
+    private var savedMode: String? = null
 
-    var savedUUID: String? = null
-        private set
+    private var savedUUID: String? = null
 
     init {
         viewModelScope.launch {

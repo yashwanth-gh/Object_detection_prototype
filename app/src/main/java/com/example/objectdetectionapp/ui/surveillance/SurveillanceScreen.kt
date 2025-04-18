@@ -12,8 +12,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,13 +26,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.objectdetectionapp.ui.shared.NavigationStateHandler
+import com.example.objectdetectionapp.ui.components.NavigateWithPermissionAndLoading
 import kotlinx.coroutines.launch
 
 @Composable
 fun SurveillanceScreen(
     uuid: String?,
-    mode: String?
+    mode: String?,
+    navController: NavController
 ) {
 
     val context = LocalContext.current
@@ -44,10 +43,7 @@ fun SurveillanceScreen(
     )
 
     var showPairingCode by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        NavigationStateHandler.stopNavigation()
-    }
+    var navigateToCamera by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -121,5 +117,24 @@ fun SurveillanceScreen(
         ) {
             Text("notify all connected devices")
         }
+        Spacer(modifier = Modifier.height(10.dp))
+        Button(
+            onClick = {
+                navigateToCamera = true
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C)) // Green
+        ) {
+            Text("Start Surveillance")
+        }
+
+        NavigateWithPermissionAndLoading(
+            shouldNavigate = navigateToCamera,
+            onNavigated = { navigateToCamera = false },
+            destination = "camera_preview_screen",
+            navController = navController,
+            permissions = arrayOf(android.Manifest.permission.CAMERA)
+        )
+
     }
 }

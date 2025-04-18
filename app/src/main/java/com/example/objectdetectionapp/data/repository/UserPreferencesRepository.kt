@@ -6,7 +6,6 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.objectdetectionapp.data.firebase.FirebaseService
-import com.example.objectdetectionapp.data.firebase.PushTokenManager
 import com.example.objectdetectionapp.utils.retryOperation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

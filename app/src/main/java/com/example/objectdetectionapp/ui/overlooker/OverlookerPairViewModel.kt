@@ -1,19 +1,14 @@
 package com.example.objectdetectionapp.ui.overlooker
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.objectdetectionapp.data.firebase.FCMService
-import com.example.objectdetectionapp.data.firebase.FirebaseService
 import com.example.objectdetectionapp.data.repository.NotificationRepository
 import com.example.objectdetectionapp.data.repository.UserPreferencesRepository
 import com.example.objectdetectionapp.domain.usecases.PairOverlookerWithSurveillanceUseCase
-import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 class OverlookerPairViewModel(
     private val overlookerUUID: String,
@@ -23,16 +18,16 @@ class OverlookerPairViewModel(
 ) : ViewModel() {
 
     sealed class PairingState {
-        object Idle : PairingState()
-        object Loading : PairingState()
-        object Success : PairingState()
+        data object Idle : PairingState()
+        data object Loading : PairingState()
+        data object Success : PairingState()
         data class Error(val message: String) : PairingState()
     }
 
     private val _pairingState = MutableStateFlow<PairingState>(PairingState.Idle)
     val pairingState: StateFlow<PairingState> = _pairingState
 
-    private val _surveillanceUUID = MutableStateFlow<String>("")
+    private val _surveillanceUUID = MutableStateFlow("")
     val surveillanceUUID: StateFlow<String> = _surveillanceUUID
 
     fun pairWithSurveillanceDevice(pairingCode: String) {

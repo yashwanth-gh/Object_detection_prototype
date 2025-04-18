@@ -7,28 +7,6 @@ import kotlinx.coroutines.tasks.await
 
 object PushTokenManager {
 
-    /*fun getTokenAndSaveToDatabase(uuid: String) {
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (!task.isSuccessful) {
-                Log.w("PushTokenManager", "Fetching FCM registration token failed", task.exception)
-                return@addOnCompleteListener
-            }
-
-            val token = task.result
-            val dbRef = FirebaseDatabase.getInstance()
-                .getReference("fcm_tokens")
-                .child(uuid)
-
-            dbRef.setValue(token)
-                .addOnSuccessListener {
-                    Log.d("PushTokenManager", "✅ FCM Token saved for $uuid")
-                }
-                .addOnFailureListener {
-                    Log.e("PushTokenManager", "❌ Failed to save token: ${it.message}")
-                }
-        }
-    }*/
-
     suspend fun getTokenAndSaveToDatabase(uuid: String) {
         try {
             val token = FirebaseMessaging.getInstance().token.await() // from kotlinx-coroutines-play-services

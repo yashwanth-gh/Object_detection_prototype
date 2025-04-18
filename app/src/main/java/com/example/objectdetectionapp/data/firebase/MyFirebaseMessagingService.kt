@@ -62,11 +62,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         notificationManager.notify(0, notificationBuilder.build())
     }
 
-    override fun onNewToken(token: String) {
-        super.onNewToken(token)
-        // You can log or send this token to your server if needed
-    }
-
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
