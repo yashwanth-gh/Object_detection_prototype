@@ -8,7 +8,8 @@ import android.view.View
 
 class BoundingBoxOverlay(
     context: Context,
-    private val detectionResults: List<TFLiteObjectDetector.DetectionResult>,
+//    private val detectionResults: List<TFLiteObjectDetector.DetectionResult>,
+    private val detectionResults: List<EfficientDetLiteDetector.DetectionResult>,
     private val imageWidth: Int,
     private val imageHeight: Int
 ) : View(context) {

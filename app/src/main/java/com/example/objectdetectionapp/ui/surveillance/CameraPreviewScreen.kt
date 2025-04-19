@@ -20,9 +20,11 @@ import android.graphics.*
 import android.view.View
 import androidx.compose.runtime.mutableStateListOf
 import com.example.objectdetectionapp.tflite.BoundingBoxOverlay
+import com.example.objectdetectionapp.tflite.EfficientDetLiteDetector
 import com.example.objectdetectionapp.tflite.TFLiteObjectDetector
 import java.io.ByteArrayOutputStream
 
+/*
 @Composable
 fun CameraPreviewScreen() {
     val context = LocalContext.current
@@ -98,6 +100,113 @@ private fun processImageProxy(
         Log.d("CameraPreview", "Number of detection results: ${detectionResults.size}")
     } else {
         Log.e("CameraPreview", "Error converting ImageProxy to Bitmap: Received null Bitmap.")
+    }
+    imageProxy.close()
+}
+
+fun ImageProxy.toBitmap(): Bitmap {
+    val yBuffer = planes[0].buffer
+    val uBuffer = planes[1].buffer
+    val vBuffer = planes[2].buffer
+
+    val ySize = yBuffer.remaining()
+    val uSize = uBuffer.remaining()
+    val vSize = vBuffer.remaining()
+
+    val nv21 = ByteArray(ySize + uSize + vSize)
+
+    yBuffer.get(nv21, 0, ySize)
+    vBuffer.get(nv21, ySize, vSize)
+    uBuffer.get(nv21, ySize + vSize, uSize)
+
+    val yuvImage = YuvImage(
+        nv21,
+        ImageFormat.NV21,
+        width, height,
+        null
+    )
+    val out = ByteArrayOutputStream()
+    yuvImage.compressToJpeg(Rect(0, 0, width, height), 100, out)
+    val imageBytes = out.toByteArray()
+    return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+}*/
+
+
+@Composable
+fun CameraPreviewScreen() {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+
+    val objectDetector = remember {
+        EfficientDetLiteDetector(context) // Use EfficientDetLiteDetector
+    }
+
+    val detectionResults = remember { mutableStateListOf<EfficientDetLiteDetector.DetectionResult>() } // Update the result type
+
+    AndroidView(
+        modifier = Modifier.fillMaxSize(),
+        factory = { ctx ->
+            val previewView = PreviewView(ctx)
+
+            val cameraProvider = cameraProviderFuture.get()
+            val preview = Preview.Builder().build().also {
+                it.surfaceProvider = previewView.surfaceProvider
+            }
+
+            val imageAnalysis = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+                .also {
+                    it.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
+                        processImageProxy(imageProxy, objectDetector, detectionResults)
+                    }
+                }
+
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            cameraProvider.unbindAll()
+            cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                preview,
+                imageAnalysis
+            )
+
+            previewView
+        }
+    )
+
+    // Draw bounding boxes on the detected people
+    if (detectionResults.isNotEmpty()) {
+        Log.d("CameraPreview", "Creating BoundingBoxOverlay with ${detectionResults.size} results")
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                BoundingBoxOverlay(
+                    ctx,
+                    detectionResults.toList(),
+                    objectDetector.INPUT_IMAGE_WIDTH,
+                    objectDetector.INPUT_IMAGE_HEIGHT
+                )
+            }
+        )
+    }
+}
+
+private fun processImageProxy(
+    imageProxy: ImageProxy,
+    detector: EfficientDetLiteDetector, // Use EfficientDetLiteDetector
+    detectionResults: MutableList<EfficientDetLiteDetector.DetectionResult> // Update the result type
+) {
+    val bitmap = imageProxy.toBitmap()
+    if (bitmap != null) {
+        val results = detector.detect(bitmap)
+        detectionResults.clear()
+        detectionResults.addAll(results)
+        Log.d("CameraPreview", "Number of detection results (EfficientDet): ${detectionResults.size}")
+    } else {
+        Log.e("CameraPreview", "Error converting ImageProxy to Bitmap.")
     }
     imageProxy.close()
 }
