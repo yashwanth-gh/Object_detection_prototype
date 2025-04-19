@@ -102,4 +102,13 @@ dependencies {
     // If you want to additionally use the CameraX View class
     implementation("androidx.camera:camera-view:${camerax_version}")
 
+    // Core TensorFlow Lite runtime library (REQUIRED)
+    implementation ("org.tensorflow:tensorflow-lite:2.16.1")
+
+    // TensorFlow Lite Support Library (RECOMMENDED for image processing and model output handling)
+    implementation ("org.tensorflow:tensorflow-lite-support:0.4.2")
+
+    // Optional: TensorFlow Lite GPU delegate (for potential performance improvement on devices with GPUs)
+    implementation ("org.tensorflow:tensorflow-lite-gpu:2.16.1")
+
 }

@@ -1,5 +1,6 @@
 package com.example.objectdetectionapp.ui.surveillance
 
+import android.content.Context
 import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -16,6 +17,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import android.graphics.*
+import android.view.View
+import androidx.compose.runtime.mutableStateListOf
+import com.example.objectdetectionapp.tflite.BoundingBoxOverlay
+import com.example.objectdetectionapp.tflite.TFLiteObjectDetector
 import java.io.ByteArrayOutputStream
 
 @Composable
@@ -24,6 +29,12 @@ fun CameraPreviewScreen() {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+
+    val objectDetector = remember {
+        TFLiteObjectDetector(context)
+    }
+
+    val detectionResults = remember { mutableStateListOf<TFLiteObjectDetector.DetectionResult>() }
 
     AndroidView(
         modifier = Modifier.fillMaxSize(),
@@ -40,12 +51,11 @@ fun CameraPreviewScreen() {
                 .build()
                 .also {
                     it.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
-                        processImageProxy(imageProxy)
+                        processImageProxy(imageProxy, objectDetector, detectionResults)
                     }
                 }
 
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
             cameraProvider.unbindAll()
             cameraProvider.bindToLifecycle(
                 lifecycleOwner,
@@ -57,13 +67,38 @@ fun CameraPreviewScreen() {
             previewView
         }
     )
+
+    // Draw bounding boxes on the detected people
+    if (detectionResults.isNotEmpty()) {
+        Log.d("CameraPreview", "Creating BoundingBoxOverlay with ${detectionResults.size} results") // ADD THIS LINE
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                BoundingBoxOverlay(
+                    ctx,
+                    detectionResults.toList(),
+                    objectDetector.INPUT_IMAGE_WIDTH, // Access via objectDetector
+                    objectDetector.INPUT_IMAGE_HEIGHT // Access via objectDetector
+                )
+            }
+        )
+    }
 }
 
-private fun processImageProxy(imageProxy: ImageProxy) {
+private fun processImageProxy(
+    imageProxy: ImageProxy,
+    detector: TFLiteObjectDetector,
+    detectionResults: MutableList<TFLiteObjectDetector.DetectionResult>
+) {
     val bitmap = imageProxy.toBitmap()
-    // TODO: Send bitmap to TFLite
-    Log.d("CameraPreview", "Bitmap captured: ${bitmap.width}x${bitmap.height}")
-
+    if (bitmap != null) {
+        val results = detector.detect(bitmap)
+        detectionResults.clear()
+        detectionResults.addAll(results)
+        Log.d("CameraPreview", "Number of detection results: ${detectionResults.size}")
+    } else {
+        Log.e("CameraPreview", "Error converting ImageProxy to Bitmap: Received null Bitmap.")
+    }
     imageProxy.close()
 }
 
@@ -93,6 +128,3 @@ fun ImageProxy.toBitmap(): Bitmap {
     val imageBytes = out.toByteArray()
     return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
 }
-
-
-
