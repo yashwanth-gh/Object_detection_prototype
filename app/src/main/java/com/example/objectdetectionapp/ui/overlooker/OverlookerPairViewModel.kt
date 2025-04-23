@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.objectdetectionapp.data.repository.NotificationRepository
-import com.example.objectdetectionapp.data.repository.UserPreferencesRepository
+import com.example.objectdetectionapp.data.repository.MainRepository
 import com.example.objectdetectionapp.domain.usecases.PairOverlookerWithSurveillanceUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +14,7 @@ class OverlookerPairViewModel(
     private val overlookerUUID: String,
     private val pairUseCase: PairOverlookerWithSurveillanceUseCase,
     private val notificationRepository:NotificationRepository,
-    private val userPreferencesRepository:UserPreferencesRepository
+    private val mainRepository:MainRepository
 ) : ViewModel() {
 
     sealed class PairingState {
@@ -36,7 +36,7 @@ class OverlookerPairViewModel(
 
             // call and get full uuid from getFullUUIDFromPairingCode make sure it is not null
             // Fetch full UUID using the pairing code
-            val fullUUID = userPreferencesRepository.getFullUUIDFromPairingCode(pairingCode)
+            val fullUUID = mainRepository.getFullUUIDFromPairingCode(pairingCode)
 
             if (fullUUID == null) {
                 _pairingState.value = PairingState.Error("Invalid pairing code or failed to fetch UUID.")

@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.objectdetectionapp.data.firebase.FCMService
 import com.example.objectdetectionapp.data.firebase.FirebaseServiceImpl
 import com.example.objectdetectionapp.data.repository.NotificationRepository
-import com.example.objectdetectionapp.data.repository.UserPreferencesRepository
+import com.example.objectdetectionapp.data.repository.MainRepository
 
 
 
@@ -16,7 +16,7 @@ class SurveillanceViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val firebaseService = FirebaseServiceImpl()
         val fcmService = FCMService(context)
-        val repository = UserPreferencesRepository(context, firebaseService)
+        val repository = MainRepository(context, firebaseService)
         val notificationRepository = NotificationRepository(fcmService,firebaseService)
 
         @Suppress("UNCHECKED_CAST")

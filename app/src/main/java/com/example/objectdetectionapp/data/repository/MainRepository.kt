@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.map
 
 private val Context.dataStore by preferencesDataStore(name = "user_prefs")
 
-class UserPreferencesRepository(
+class MainRepository(
     private val context: Context,
     private val firebaseService: FirebaseService
 ) {
@@ -61,32 +61,25 @@ class UserPreferencesRepository(
         }
     }
 
-    suspend fun getSavedUserModeAndUUIDFromDatastore(): Pair<String?, String?> {
-        var mode: String? = null
-        var uuid: String? = null
-
-        context.dataStore.data.collect { preferences ->
-            mode = preferences[MODE_KEY]
-            uuid = preferences[UUID_KEY]
-            // Break the flow after first value to avoid collecting forever
-        }
-
-        // In case no data was emitted (very rare), still return something
-        return Pair(mode, uuid)
-    }
 
     suspend fun saveModeAndUUIDToFirebase(mode: String, uuid: String) {
+        retryOperation(
+            maxAttempts = 3,
+            delayMillis = 1500,
+            operationName = "saveSurveillanceDevice"
+        ) {
         firebaseService.saveSurveillanceDevice(uuid)
+        }
         saveUserModeAndUUIDToDatastore(mode, uuid)
     }
 
-    private suspend fun saveFCMTokenToFirebase(uuid: String) {
+     suspend fun saveFCMTokenToFirebase(uuid: String) {
         try {
             Log.d(TAG, "saveFCMTokenToFirebase triggered")
 
             retryOperation(
                 maxAttempts = 3,
-                delayMillis = 1500,
+                delayMillis = 2500,
                 operationName = "SaveFCMToken"
             ) {
                 firebaseService.getTokenAndSaveToDatabase(uuid)
@@ -109,7 +102,5 @@ class UserPreferencesRepository(
             null
         }
     }
-
-
 
 }

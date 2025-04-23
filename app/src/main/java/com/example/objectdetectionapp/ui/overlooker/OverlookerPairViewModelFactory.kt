@@ -7,7 +7,7 @@ import com.example.objectdetectionapp.data.firebase.FCMService
 import com.example.objectdetectionapp.data.firebase.FirebaseService
 import com.example.objectdetectionapp.data.firebase.FirebaseServiceImpl
 import com.example.objectdetectionapp.data.repository.NotificationRepository
-import com.example.objectdetectionapp.data.repository.UserPreferencesRepository
+import com.example.objectdetectionapp.data.repository.MainRepository
 import com.example.objectdetectionapp.domain.usecases.PairOverlookerWithSurveillanceUseCase
 
 class OverlookerPairViewModelFactory(
@@ -17,9 +17,9 @@ class OverlookerPairViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val fcmService = FCMService(context)
         val firebaseService: FirebaseService = FirebaseServiceImpl()
-        val userPreferencesRepository = UserPreferencesRepository(context, FirebaseServiceImpl())
-        val useCase = PairOverlookerWithSurveillanceUseCase(firebaseService, userPreferencesRepository)
+        val mainRepository = MainRepository(context, FirebaseServiceImpl())
         val notificationRepository = NotificationRepository(fcmService,firebaseService)
-        return OverlookerPairViewModel(overlookerUUID, useCase,notificationRepository,userPreferencesRepository) as T
+        val useCase = PairOverlookerWithSurveillanceUseCase(firebaseService, mainRepository, notificationRepository)
+        return OverlookerPairViewModel(overlookerUUID, useCase,notificationRepository,mainRepository) as T
     }
 }

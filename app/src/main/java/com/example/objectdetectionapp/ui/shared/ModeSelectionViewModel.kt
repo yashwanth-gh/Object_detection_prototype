@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.objectdetectionapp.data.models.UserSessionData
-import com.example.objectdetectionapp.data.repository.UserPreferencesRepository
+import com.example.objectdetectionapp.data.repository.MainRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
-class ModeSelectionViewModel(private val repository: UserPreferencesRepository) : ViewModel() {
+class ModeSelectionViewModel(private val repository: MainRepository) : ViewModel() {
 
     private val _userSession = MutableStateFlow(UserSessionData(null, null, null))
     val userSession: StateFlow<UserSessionData> = _userSession.asStateFlow()

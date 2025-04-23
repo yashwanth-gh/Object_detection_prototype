@@ -85,9 +85,11 @@ fun SurveillanceScreen(
         if (showPairingCode && uuid != null) {
             Text(
                 text = uuid.take(6),
-                fontSize = 28.sp, // Larger than typical title size
-                fontWeight = FontWeight.Bold,
-                color = Color.White
+                fontSize = 32.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(0xFF00E5FF), // Vibrant cyan
+                modifier = Modifier
+                    .padding(8.dp)
             )
         }
 
@@ -107,7 +109,11 @@ fun SurveillanceScreen(
             onClick = {
                 scope.launch {
                     uuid?.let {
-                        viewModel.notifyOverlookers(surveillanceUUID = it)
+                        viewModel.notifyOverlookers(
+                            uuid,
+                            "Alert!",
+                            "Hi, you are connected to new device."
+                        )
                     }
                 }
 

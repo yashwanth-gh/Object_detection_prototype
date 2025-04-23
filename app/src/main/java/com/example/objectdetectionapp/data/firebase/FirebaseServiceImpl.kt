@@ -89,7 +89,16 @@ class FirebaseServiceImpl : FirebaseService {
                     .get().await()
                 val token = tokenSnap.getValue(String::class.java)
                 if (!token.isNullOrEmpty()) {
+                    Log.w(
+                        _tag,
+                        "your token is : $token"
+                    )
                     tokens.add(token)
+                } else {
+                    Log.w(
+                        _tag,
+                        "Token is empty or null"
+                    )
                 }
             }
 
@@ -126,15 +135,25 @@ class FirebaseServiceImpl : FirebaseService {
                 if (uuid != null) {
                     return uuid
                 } else {
-                    Log.e("fetchFullSurveillanceUUID", "No UUID found for pairing code: $pairingCode")
+                    Log.e(_tag, "No UUID found for pairing code: $pairingCode")
                     null
                 }
             } else {
                 null // Return null if no device is found with the given pairing code
             }
         } catch (e: Exception) {
-            Log.e("fetchFullSurveillanceUUID", "Error fetching full UUID: ${e.message}")
+            Log.e(_tag, "Error fetching full UUID: ${e.message}")
             null
+        }
+    }
+
+    override suspend fun checkIfFCMTokenExists(uuid: String): Boolean {
+        return try {
+            val snapshot = database.child("fcm_tokens").child(uuid).get().await()
+            snapshot.exists()
+        } catch (e: Exception) {
+            Log.e(_tag, "Error checking if FCM token exists for $uuid: ${e.message}")
+            false
         }
     }
 
