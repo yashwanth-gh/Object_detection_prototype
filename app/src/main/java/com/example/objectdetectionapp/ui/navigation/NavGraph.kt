@@ -23,6 +23,7 @@ fun NavGraph(navController: NavHostController) {
             navController = navController,
             startDestination = "mode_selection"
         ) {
+
             composable("mode_selection") {
                 ModeSelectionScreen(navController)
             }
@@ -35,7 +36,7 @@ fun NavGraph(navController: NavHostController) {
             ) {
                 val uuid = it.arguments?.getString("uuid")
                 val mode = it.arguments?.getString("mode")
-                SurveillanceScreen(uuid = uuid, mode = mode,navController)
+                SurveillanceScreen(uuid = uuid, mode = mode, navController)
             }
 
             composable(

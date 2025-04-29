@@ -12,11 +12,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import androidx.navigation.compose.rememberNavController
-import com.example.objectdetectionapp.ui.navigation.NavGraph
+import com.example.objectdetectionapp.ui.components.AppContent
 import com.example.objectdetectionapp.ui.theme.ObjectDetectionAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -33,18 +31,21 @@ class MainActivity : ComponentActivity() {
         ) { isGranted: Boolean ->
             if (isGranted) {
                 // Permission granted, you can proceed with sending notifications
-                Toast.makeText(this, "Permission granted! You can now send notifications.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this, "Permission granted! You can now send notifications.", Toast.LENGTH_SHORT
+                ).show()
             } else {
                 // Permission denied, handle accordingly
-                Toast.makeText(this, "Permission denied. You can't send notifications.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this, "Permission denied. You can't send notifications.", Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
         // Request notification permission for Android 13 and above
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
+                    this, Manifest.permission.POST_NOTIFICATIONS
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
                 // Request the permission
@@ -56,18 +57,14 @@ class MainActivity : ComponentActivity() {
             ObjectDetectionAppTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigator()
+                    AppContent()
                 }
             }
         }
     }
 }
 
-@Composable
-fun AppNavigator() {
-    val navController = rememberNavController()
-    NavGraph(navController = navController)
-}
+
+
