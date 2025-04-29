@@ -17,7 +17,6 @@ class SurveillanceViewModel(
     private val notificationRepository: NotificationRepository
 ) : ViewModel() {
 
-
     private var _surveillanceUUID = MutableStateFlow("")
     var surveillanceUUID: StateFlow<String?> = _surveillanceUUID.asStateFlow()
 

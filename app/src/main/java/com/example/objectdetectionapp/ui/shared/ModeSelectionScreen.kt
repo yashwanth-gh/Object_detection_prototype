@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,6 +41,7 @@ fun ModeSelectionScreen(
 
     val userSession by viewModel.userSession.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val modeSelectionState by viewModel.modeSelectionState.collectAsState()
 
     // Delay UI rendering until loading is complete and user session is checked
     val shouldShowModeSelection = !isLoading && userSession.uuid == null
@@ -70,6 +72,27 @@ fun ModeSelectionScreen(
         }
     }
 
+    // Handle the state of mode selection and saving
+    LaunchedEffect(modeSelectionState) {
+        when (modeSelectionState) {
+            is ModeSelectionViewModel.ModeSelectionState.Success -> {
+                shouldNavigate = true
+            }
+            is ModeSelectionViewModel.ModeSelectionState.Error -> {
+                val errorMessage = (modeSelectionState as ModeSelectionViewModel.ModeSelectionState.Error).message
+                Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                shouldNavigate = false
+                destination = ""
+            }
+            ModeSelectionViewModel.ModeSelectionState.Loading -> {
+                // Optionally, show a loading indicator here if needed during the save operation
+            }
+            ModeSelectionViewModel.ModeSelectionState.Idle -> {
+                // Initial state, no action needed
+            }
+        }
+    }
+
     if (isLoading) {
         AppLoadingScreen()
     } else if (shouldShowModeSelection) {
@@ -95,20 +118,28 @@ fun ModeSelectionScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            ModeButton("Surveillance Mode") {
+            ModeButton(
+                label = if (modeSelectionState == ModeSelectionViewModel.ModeSelectionState.Loading) "Connecting..." else "Surveillance Mode",
+                enabled = modeSelectionState != ModeSelectionViewModel.ModeSelectionState.Loading
+            ) {
                 val uuid = UUID.randomUUID().toString()
                 viewModel.setMode("surveillance", uuid)
                 destination = "surveillance/$uuid/surveillance"
-                shouldNavigate = true
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            ModeButton("Overlooker Mode") {
+            ModeButton(
+                label = if (modeSelectionState == ModeSelectionViewModel.ModeSelectionState.Loading) "Connecting..." else "Overlooker Mode",
+                enabled = modeSelectionState != ModeSelectionViewModel.ModeSelectionState.Loading
+            ) {
                 val uuid = UUID.randomUUID().toString()
                 viewModel.setMode("overlooker", uuid)
                 destination = "overlooker_pair/$uuid/overlooker"
-                shouldNavigate = true
+            }
+            if (modeSelectionState == ModeSelectionViewModel.ModeSelectionState.Loading) {
+                Spacer(modifier = Modifier.height(16.dp))
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -123,13 +154,14 @@ fun ModeSelectionScreen(
 }
 
 @Composable
-fun ModeButton(label: String, onClick: () -> Unit) {
+fun ModeButton(label: String, enabled: Boolean = true, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         modifier = Modifier
             .height(56.dp)
             .fillMaxWidth(0.8f),
-        shape = RoundedCornerShape(10.dp)
+        shape = RoundedCornerShape(10.dp),
+        enabled = enabled
     ) {
         Text(text = label, style = MaterialTheme.typography.labelLarge)
     }

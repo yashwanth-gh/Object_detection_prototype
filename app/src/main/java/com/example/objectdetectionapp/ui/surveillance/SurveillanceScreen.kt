@@ -107,25 +107,6 @@ fun SurveillanceScreen(
         Spacer(modifier = Modifier.height(10.dp))
         Button(
             onClick = {
-                scope.launch {
-                    uuid?.let {
-                        viewModel.notifyOverlookers(
-                            uuid,
-                            "Alert!",
-                            "Hi, you are connected to new device."
-                        )
-                    }
-                }
-
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)) // Stylish blue
-        ) {
-            Text("notify all connected devices")
-        }
-        Spacer(modifier = Modifier.height(10.dp))
-        Button(
-            onClick = {
                 navigateToCamera = true
             },
             modifier = Modifier.fillMaxWidth(),

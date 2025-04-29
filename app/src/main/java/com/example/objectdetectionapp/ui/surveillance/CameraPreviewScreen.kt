@@ -23,8 +23,8 @@ import com.example.objectdetectionapp.tflite.BoundingBoxOverlay
 import com.example.objectdetectionapp.tflite.EfficientDetLiteDetector
 import com.example.objectdetectionapp.utils.processImageProxy
 import java.io.ByteArrayOutputStream
-//import com.example.objectdetectionapp.tflite.TFLiteObjectDetector
 
+//import com.example.objectdetectionapp.tflite.TFLiteObjectDetector
 /*
 @Composable
 fun CameraPreviewScreen() {
@@ -137,34 +137,37 @@ fun ImageProxy.toBitmap(): Bitmap {
 fun CameraPreviewScreen() {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-
-    val viewModel: SurveillanceViewModel = viewModel(factory = SurveillanceViewModelFactory(context)) // Get ViewModel
+    val viewModel: SurveillanceViewModel =
+        viewModel(factory = SurveillanceViewModelFactory(context)) // Get ViewModel
 
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-
     val objectDetector = remember {
         EfficientDetLiteDetector(context) // Use EfficientDetLiteDetector
     }
+    val detectionResults =
+        remember { mutableStateListOf<EfficientDetLiteDetector.DetectionResult>() } // Update the result type
 
-    val detectionResults = remember { mutableStateListOf<EfficientDetLiteDetector.DetectionResult>() } // Update the result type
+    // Create a background executor for image analysis
+    val analysisExecutor =
+        remember { ContextCompat.getMainExecutor(context) } // Or a custom ExecutorService
 
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
             val previewView = PreviewView(ctx)
-
             val cameraProvider = cameraProviderFuture.get()
-
             val preview = Preview.Builder().build().also {
                 it.surfaceProvider = previewView.surfaceProvider
             }
 
             val imageAnalysis = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                // Set a target frame rate if needed
+                // .setTargetFrameRate(15)
                 .build()
                 .also {
-                    it.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
-                        processImageProxy(imageProxy, objectDetector, detectionResults){results ->
+                    it.setAnalyzer(analysisExecutor) { imageProxy ->
+                        processImageProxy(imageProxy, objectDetector, detectionResults) { results ->
                             viewModel.handleDetectionResults(results) // Call ViewModel function
                         }
                     }
