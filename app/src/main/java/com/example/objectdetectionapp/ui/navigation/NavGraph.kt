@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.objectdetectionapp.ui.overlooker.OverlookerHomeScreen
 import com.example.objectdetectionapp.ui.overlooker.OverlookerPairScreen
+import com.example.objectdetectionapp.ui.shared.DetectionScreen
 import com.example.objectdetectionapp.ui.shared.ModeSelectionScreen
 import com.example.objectdetectionapp.ui.surveillance.CameraPreviewScreen
 import com.example.objectdetectionapp.ui.surveillance.SurveillanceScreen
@@ -63,6 +64,10 @@ fun NavGraph(navController: NavHostController) {
 
             composable("camera_preview_screen") {
                 CameraPreviewScreen()
+            }
+
+            composable("detections_screen"){
+                DetectionScreen()
             }
         }
 

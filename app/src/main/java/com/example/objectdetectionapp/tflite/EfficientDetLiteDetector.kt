@@ -3,9 +3,10 @@ package com.example.objectdetectionapp.tflite
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.RectF
+import org.tensorflow.lite.support.common.FileUtil
 import android.util.Log
 import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.support.common.FileUtil
+
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 

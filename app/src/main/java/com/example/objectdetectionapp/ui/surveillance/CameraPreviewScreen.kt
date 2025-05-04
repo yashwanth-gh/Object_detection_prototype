@@ -167,8 +167,12 @@ fun CameraPreviewScreen() {
                 .build()
                 .also {
                     it.setAnalyzer(analysisExecutor) { imageProxy ->
+                        val bitmap = imageProxy.toBitmap() // Get the Bitmap here
                         processImageProxy(imageProxy, objectDetector, detectionResults) { results ->
-                            viewModel.handleDetectionResults(results) // Call ViewModel function
+                            viewModel.handleDetectionResults(
+                                results,
+                                bitmap
+                            )
                         }
                     }
                 }

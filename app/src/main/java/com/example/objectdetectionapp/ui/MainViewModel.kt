@@ -15,6 +15,9 @@ class MainViewModel(private val repository: MainRepository) : ViewModel() {
     private val _userUUID = MutableStateFlow<String?>(null)
     val userUUID: StateFlow<String?> = _userUUID
 
+    private val _connectedSurveillanceUUID = MutableStateFlow<String?>(null)
+    val connectedSurveillanceUUID: StateFlow<String?> = _connectedSurveillanceUUID
+
     init {
         viewModelScope.launch {
             repository.userMode.collectLatest { mode ->
@@ -24,6 +27,12 @@ class MainViewModel(private val repository: MainRepository) : ViewModel() {
         viewModelScope.launch {
             repository.userUUID.collectLatest { uuid ->
                 _userUUID.value = uuid
+            }
+        }
+
+        viewModelScope.launch {
+            repository.connectedSurveillanceUUID.collectLatest { uuid ->
+                _connectedSurveillanceUUID.value = uuid
             }
         }
     }

@@ -8,6 +8,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -20,15 +22,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.example.objectdetectionapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
-
 @Composable
 fun SidePanel(
     mode: String? = "No Mode",
     uuid: String? = "NaN",
-    onSettingsClick: () -> Unit,
+    connectedSurveillanceUUID: String? = "NaN",
+    navController: NavHostController,
+    onCloseDrawer: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -39,76 +43,217 @@ fun SidePanel(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            horizontalAlignment = Alignment.Start // Align content to the start
+            horizontalAlignment = Alignment.Start
         ) {
-            // Dummy Profile Picture
-            Image(
-                painter = painterResource(id = R.drawable.ic_profile_placeholder_foreground),
-                contentDescription = "Profile Picture",
-                modifier = Modifier
-                    .size(72.dp) // Slightly smaller profile image
-                    .clip(CircleShape)
-                    .align(Alignment.CenterHorizontally), // Center the image
-                contentScale = ContentScale.Crop
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            // Dummy User Name
-            Text(
-                text = "Hi! User",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.CenterHorizontally) // Center the name
-            )
+            // Profile Section
+            ProfileSection()
+
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Display Mode and UUID if available
+            // User Session Info Section
             if (!mode.isNullOrBlank() && mode != "No Mode" && !uuid.isNullOrBlank() && uuid != "NaN") {
-                Text(text = "Mode:", style = MaterialTheme.typography.bodyMedium)
-                Text(text = mode, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "UUID:", style = MaterialTheme.typography.bodyMedium)
-                Text(text = uuid, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                UserSessionInfo(mode, uuid, connectedSurveillanceUUID)
+                Spacer(modifier = Modifier.height(16.dp))
+                Divider()
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            Divider()
-            Spacer(modifier = Modifier.height(16.dp))
+            // Navigation Links
+            NavigationLinks(
+                mode = mode,
+                uuid = uuid,
+                connectedSurveillanceUUID = connectedSurveillanceUUID,
+                navController = navController,
+                onCloseDrawer = onCloseDrawer,
+                context = context
+            )
 
-            // GitHub Link as TextButton
-            TextButton(onClick = { openLink(context, "https://github.com/yashwanth-gh/Object_detection_prototype") }) {
-                Text(
-                    text = "GitHub Repo",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary // Use primary color for emphasis
-                )
+            Spacer(modifier = Modifier.weight(1f)) // Push footer links to the bottom
+
+            // Footer Links
+            FooterLinks()
+        }
+    }
+}
+
+@Composable
+private fun ProfileSection() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        // Profile Picture
+        Image(
+            painter = painterResource(id = R.drawable.ic_profile_placeholder_foreground),
+            contentDescription = "Profile Picture",
+            modifier = Modifier
+                .size(72.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // User Name
+        Text(
+            text = "Hi! User",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun UserSessionInfo(
+    mode: String?,
+    uuid: String?,
+    connectedSurveillanceUUID: String?
+) {
+    Column {
+        InfoRow("Mode:", mode ?: "")
+        Spacer(modifier = Modifier.height(8.dp))
+        InfoRow("UUID:", uuid ?: "")
+
+        // Show connected surveillance UUID for overlooker mode
+        if (mode?.lowercase() == "overlooker" &&
+            !connectedSurveillanceUUID.isNullOrBlank() &&
+            connectedSurveillanceUUID != "NaN"
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+            InfoRow("Connected Surveillance UUID:", connectedSurveillanceUUID)
+        }
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Column {
+        Text(text = label, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun NavigationLinks(
+    mode: String?,
+    uuid: String?,
+    connectedSurveillanceUUID: String?,
+    navController: NavHostController,
+    onCloseDrawer: () -> Unit,
+    context: Context
+) {
+    // Home Button
+    NavigationButton(
+        text = "Home",
+        icon = Icons.Filled.Home,
+        onClick = {
+            when {
+                mode?.lowercase() == "surveillance" && !uuid.isNullOrBlank() -> {
+                    navController.navigate("surveillance/${uuid}/${mode}")
+                }
+                mode?.lowercase() == "overlooker" && !uuid.isNullOrBlank() &&
+                        !connectedSurveillanceUUID.isNullOrBlank() -> {
+                    navController.navigate("overlooker_home/${uuid}/${connectedSurveillanceUUID}")
+                }
+                else -> {
+                    Toast.makeText(context, "Missing UUID or mode!", Toast.LENGTH_SHORT).show()
+                }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Divider()
-            Spacer(modifier = Modifier.height(8.dp))
+            onCloseDrawer()
+        }
+    )
 
-            // Settings Link as TextButton with Icon
-            TextButton(onClick = onSettingsClick) {
-                Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.width(8.dp))
+    // Detections Button
+    NavigationButton(
+        text = "Detections",
+        icon = Icons.Filled.Notifications,
+        onClick = {
+            navController.navigate("detections_screen")
+            onCloseDrawer()
+        }
+    )
+
+    // GitHub Repo Button
+    NavigationButton(
+        text = "GitHub Repo",
+        onClick = {
+            openLink(context, "https://github.com/yashwanth-gh/Object_detection_prototype")
+            onCloseDrawer()
+        }
+    )
+
+    // Settings Button
+    NavigationButton(
+        text = "Settings",
+        icon = Icons.Filled.Settings,
+        onClick = {
+            navController.navigate("settings_screen") // Navigate directly
+            onCloseDrawer()
+        }
+    )
+}
+
+@Composable
+private fun NavigationButton(
+    text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    onClick: () -> Unit
+) {
+    Column {
+        TextButton(
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (icon != null) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = text,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
                 Text(
-                    text = "Settings",
+                    text = text,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Divider()
-            Spacer(modifier = Modifier.weight(1f)) // Push other links to the bottom
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Divider()
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
 
-            // Optional Links
-            TextButton(onClick = { /* TODO: Implement Privacy Policy */ }) {
-                Text("Privacy Policy", fontSize = 14.sp, color = MaterialTheme.colorScheme.secondary)
-            }
-            TextButton(onClick = { /* TODO: Implement Terms of Service */ }) {
-                Text("Terms of Service", fontSize = 14.sp, color = MaterialTheme.colorScheme.secondary)
-            }
+@Composable
+private fun FooterLinks() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        TextButton(onClick = { /* TODO: Implement Privacy Policy */ }) {
+            Text(
+                "Privacy Policy",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+
+        TextButton(onClick = { /* TODO: Implement Terms of Service */ }) {
+            Text(
+                "Terms of Service",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.secondary
+            )
         }
     }
 }

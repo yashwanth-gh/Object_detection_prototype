@@ -32,15 +32,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppContent() {
     val context = LocalContext.current
-    val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(context)) // Create ViewModel
+    val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(context))
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    // Example states for mode and uuid (replace with your actual logic)
     val currentMode by mainViewModel.userMode.collectAsState()
     val currentUuid by mainViewModel.userUUID.collectAsState()
-
+    val connectedSurveillanceUUID by mainViewModel.connectedSurveillanceUUID.collectAsState()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -48,17 +47,12 @@ fun AppContent() {
             SidePanel(
                 mode = currentMode,
                 uuid = currentUuid,
-                onSettingsClick = {
-                    Toast.makeText(context, "Settings Clicked (TODO: Navigate)", Toast.LENGTH_SHORT)
-                        .show()
-                    scope.launch { drawerState.close() } // Close drawer after action
-                    // TODO: Navigate to your settings screen using navController
-                    // navController.navigate("settings_route")
-                }
+                connectedSurveillanceUUID = connectedSurveillanceUUID,
+                navController = navController, // Pass navController
+                onCloseDrawer = { scope.launch { drawerState.close() } }
             )
         },
         content = {
-            // Your main content goes here, e.g., the AppNavigator
             Scaffold(
                 topBar = {
                     TopAppBar(
