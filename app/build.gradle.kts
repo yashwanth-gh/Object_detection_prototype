@@ -56,6 +56,8 @@ dependencies {
     val camerax_version = "1.5.0-alpha06"
     val lifecycle_version = "2.8.7"
     val nav_version = "2.8.9"
+    // Add Fragment library with version 1.3.0+ to fix ActivityResult API issue
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.activity:activity-compose:1.10.1")
@@ -64,11 +66,18 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-//    implementation("com.google.firebase:firebase-auth:23.2.0")
-//    implementation("androidx.credentials:credentials:1.5.0-rc01")
-//    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+
+
+    // Import the BoM for the Firebase platform
+    implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
+
+    // Add Firebase Storage dependency - this will fix the unresolved references
+    implementation("com.google.firebase:firebase-storage")
+
+    // Add Firebase Database dependency (needed for database.reference)
+    implementation("com.google.firebase:firebase-database")
+
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
-    implementation("com.google.firebase:firebase-database:21.0.0")
     implementation("com.google.firebase:firebase-messaging:24.1.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
@@ -102,13 +111,25 @@ dependencies {
     // If you want to additionally use the CameraX View class
     implementation("androidx.camera:camera-view:${camerax_version}")
 
-    // Core TensorFlow Lite runtime library (REQUIRED)
-    implementation ("org.tensorflow:tensorflow-lite:2.16.1")
 
-    // TensorFlow Lite Support Library (RECOMMENDED for image processing and model output handling)
-    implementation ("org.tensorflow:tensorflow-lite-support:0.4.2")
+    // TensorFlow Lite dependencies with proper Kotlin DSL syntax for exclusions
+    implementation("org.tensorflow:tensorflow-lite:2.16.1") {
+        exclude(group = "com.google.ai.edge.litert", module = "litert-api")
+        exclude(group = "com.google.ai.edge.litert", module = "litert")
+    }
 
-    // Optional: TensorFlow Lite GPU delegate (for potential performance improvement on devices with GPUs)
-    implementation ("org.tensorflow:tensorflow-lite-gpu:2.16.1")
+    implementation("org.tensorflow:tensorflow-lite-support:0.5.0") {
+        exclude(group = "com.google.ai.edge.litert", module = "litert-api")
+        exclude(group = "com.google.ai.edge.litert", module = "litert")
+    }
+
+    implementation("org.tensorflow:tensorflow-lite-gpu:2.16.1") {
+        exclude(group = "com.google.ai.edge.litert", module = "litert-api")
+        exclude(group = "com.google.ai.edge.litert", module = "litert")
+    }
+
+    implementation(platform("androidx.compose:compose-bom:2025.02.00"))
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
 
 }
