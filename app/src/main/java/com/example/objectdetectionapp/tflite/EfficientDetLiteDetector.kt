@@ -59,7 +59,7 @@ class EfficientDetLiteDetector(context: Context) {
 
         for (i in 0 until count) {
             val score = outputScores[0][i]
-            if (score > 0.7f) { // Adjust confidence threshold as needed
+            if (score > 0.55f) { // Adjust confidence threshold as needed
                 val labelIdx = outputClasses[0][i].toInt()
                 val label = labels.getOrElse(labelIdx) { "Unknown" }
 

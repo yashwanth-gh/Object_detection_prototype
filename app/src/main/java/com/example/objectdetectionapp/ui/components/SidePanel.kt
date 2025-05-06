@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -31,6 +32,8 @@ fun SidePanel(
     mode: String? = "No Mode",
     uuid: String? = "NaN",
     connectedSurveillanceUUID: String? = "NaN",
+    username: String,
+    email: String,
     navController: NavHostController,
     onCloseDrawer: () -> Unit
 ) {
@@ -46,7 +49,7 @@ fun SidePanel(
             horizontalAlignment = Alignment.Start
         ) {
             // Profile Section
-            ProfileSection()
+            ProfileSection(username)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -77,12 +80,11 @@ fun SidePanel(
 }
 
 @Composable
-private fun ProfileSection() {
+private fun ProfileSection(username: String) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Profile Picture
         Image(
             painter = painterResource(id = R.drawable.ic_profile_placeholder_foreground),
             contentDescription = "Profile Picture",
@@ -94,9 +96,8 @@ private fun ProfileSection() {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // User Name
         Text(
-            text = "Hi! User",
+            text = "Hi! $username",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
@@ -177,9 +178,11 @@ private fun NavigationLinks(
         }
     )
 
-    // GitHub Repo Button
+
+// GitHub Repo Button
     NavigationButton(
         text = "GitHub Repo",
+        icon = Icons.Filled.Info,
         onClick = {
             openLink(context, "https://github.com/yashwanth-gh/Object_detection_prototype")
             onCloseDrawer()

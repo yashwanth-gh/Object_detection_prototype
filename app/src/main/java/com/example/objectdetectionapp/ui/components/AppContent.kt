@@ -1,6 +1,5 @@
 package com.example.objectdetectionapp.ui.components
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -21,7 +20,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.objectdetectionapp.ui.MainViewModel
 import com.example.objectdetectionapp.ui.MainViewModelFactory
@@ -40,6 +38,7 @@ fun AppContent() {
     val currentMode by mainViewModel.userMode.collectAsState()
     val currentUuid by mainViewModel.userUUID.collectAsState()
     val connectedSurveillanceUUID by mainViewModel.connectedSurveillanceUUID.collectAsState()
+    val userData by mainViewModel.userData.collectAsState()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -48,6 +47,8 @@ fun AppContent() {
                 mode = currentMode,
                 uuid = currentUuid,
                 connectedSurveillanceUUID = connectedSurveillanceUUID,
+                username = userData.username,
+                email = userData.email,
                 navController = navController, // Pass navController
                 onCloseDrawer = { scope.launch { drawerState.close() } }
             )

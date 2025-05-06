@@ -1,9 +1,15 @@
 package com.example.objectdetectionapp.ui.navigation
 
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -15,6 +21,8 @@ import com.example.objectdetectionapp.ui.shared.DetectionScreen
 import com.example.objectdetectionapp.ui.shared.ModeSelectionScreen
 import com.example.objectdetectionapp.ui.surveillance.CameraPreviewScreen
 import com.example.objectdetectionapp.ui.surveillance.SurveillanceScreen
+import com.example.objectdetectionapp.ui.userSignIn.SignInScreen
+import com.example.objectdetectionapp.ui.userSignIn.SignInViewModel
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -22,9 +30,11 @@ fun NavGraph(navController: NavHostController) {
     Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
-            startDestination = "mode_selection"
+            startDestination = "sign_in" // Initial start destination
         ) {
-
+            composable("sign_in") {
+                SignInScreen(navController = navController)
+            }
             composable("mode_selection") {
                 ModeSelectionScreen(navController)
             }
@@ -66,10 +76,9 @@ fun NavGraph(navController: NavHostController) {
                 CameraPreviewScreen()
             }
 
-            composable("detections_screen"){
+            composable("detections_screen") {
                 DetectionScreen()
             }
         }
-
     }
 }

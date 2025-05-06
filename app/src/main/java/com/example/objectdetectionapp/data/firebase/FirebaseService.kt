@@ -1,6 +1,7 @@
 package com.example.objectdetectionapp.data.firebase
 
 import com.example.objectdetectionapp.data.models.Detection
+import com.example.objectdetectionapp.data.models.User
 import kotlinx.coroutines.flow.Flow
 
 interface FirebaseService {
@@ -13,4 +14,5 @@ interface FirebaseService {
     suspend fun fetchFullSurveillanceUUID(pairingCode: String): String?
     suspend fun checkIfFCMTokenExists(uuid: String): Boolean
     suspend fun fetchDetectionDetails(surveillanceUUID: String): Flow<List<Detection>>
+    suspend fun saveUser(user: User)
 }

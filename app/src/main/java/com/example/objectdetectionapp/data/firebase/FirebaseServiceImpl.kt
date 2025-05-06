@@ -3,6 +3,7 @@ package com.example.objectdetectionapp.data.firebase
 import android.util.Log
 import com.example.objectdetectionapp.data.models.BoundingBox
 import com.example.objectdetectionapp.data.models.Detection
+import com.example.objectdetectionapp.data.models.User
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -12,6 +13,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.util.UUID
 
 class FirebaseServiceImpl : FirebaseService {
 
@@ -165,47 +167,66 @@ class FirebaseServiceImpl : FirebaseService {
         }
     }
 
-    override suspend fun fetchDetectionDetails(surveillanceUUID: String): Flow<List<Detection>> = callbackFlow {
-        val detectionsRef = database.child("surveillance_devices").child(surveillanceUUID).child("detections")
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val detectionsList = mutableListOf<Detection>()
-                for (childSnapshot in snapshot.children) {
-                    try {
-                        val timestamp = childSnapshot.child("timestamp").getValue(Long::class.java) ?: 0L
-                        val label = childSnapshot.child("label").getValue(String::class.java) ?: ""
-                        val confidence = childSnapshot.child("confidence").getValue(Float::class.java) ?: 0f
-                        val imagePath = childSnapshot.child("imagePath").getValue(String::class.java)
-                        val boundingBoxData = childSnapshot.child("boundingBox").value as? Map<String, Long>
-                        val boundingBox = BoundingBox(
-                            x = boundingBoxData?.get("x")?.toInt() ?: 0,
-                            y = boundingBoxData?.get("y")?.toInt() ?: 0,
-                            width = boundingBoxData?.get("width")?.toInt() ?: 0,
-                            height = boundingBoxData?.get("height")?.toInt() ?: 0
-                        )
-                        detectionsList.add(
-                            Detection(
-                                timestamp = timestamp,
-                                label = label,
-                                confidence = confidence,
-                                imagePath = imagePath,
-                                boundingBox = boundingBox
+    override suspend fun fetchDetectionDetails(surveillanceUUID: String): Flow<List<Detection>> =
+        callbackFlow {
+            val detectionsRef =
+                database.child("surveillance_devices").child(surveillanceUUID).child("detections")
+            val listener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val detectionsList = mutableListOf<Detection>()
+                    for (childSnapshot in snapshot.children) {
+                        try {
+                            val timestamp =
+                                childSnapshot.child("timestamp").getValue(Long::class.java) ?: 0L
+                            val label =
+                                childSnapshot.child("label").getValue(String::class.java) ?: ""
+                            val confidence =
+                                childSnapshot.child("confidence").getValue(Float::class.java) ?: 0f
+                            val imagePath =
+                                childSnapshot.child("imagePath").getValue(String::class.java)
+                            val boundingBoxData =
+                                childSnapshot.child("boundingBox").value as? Map<String, Long>
+                            val boundingBox = BoundingBox(
+                                x = boundingBoxData?.get("x")?.toInt() ?: 0,
+                                y = boundingBoxData?.get("y")?.toInt() ?: 0,
+                                width = boundingBoxData?.get("width")?.toInt() ?: 0,
+                                height = boundingBoxData?.get("height")?.toInt() ?: 0
                             )
-                        )
-                    } catch (e: Exception) {
-                        Log.e(_tag, "Error parsing detection: ${e.message}")
+                            detectionsList.add(
+                                Detection(
+                                    timestamp = timestamp,
+                                    label = label,
+                                    confidence = confidence,
+                                    imagePath = imagePath,
+                                    boundingBox = boundingBox
+                                )
+                            )
+                        } catch (e: Exception) {
+                            Log.e(_tag, "Error parsing detection: ${e.message}")
+                        }
                     }
+                    trySend(detectionsList.reversed()).isSuccess
                 }
-                trySend(detectionsList.reversed()).isSuccess
-            }
 
-            override fun onCancelled(error: DatabaseError) {
-                Log.e(_tag, "Failed to read detections: ${error.message}")
-                trySend(emptyList()).isSuccess
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e(_tag, "Failed to read detections: ${error.message}")
+                    trySend(emptyList()).isSuccess
+                }
             }
+            detectionsRef.addValueEventListener(listener)
+            awaitClose { detectionsRef.removeEventListener(listener) }
         }
-        detectionsRef.addValueEventListener(listener)
-        awaitClose { detectionsRef.removeEventListener(listener) }
+
+    override suspend fun saveUser(user: User) {
+        try {
+            val usersRef = database.child("users")
+            val uid = UUID.randomUUID().toString()
+            usersRef.child(uid).setValue(user).await()
+            Log.d(_tag, "User ${user.username} saved to Firebase")
+        } catch (e: Exception) {
+            Log.e(_tag, "Failed to save user to Firebase: ${e.message}")
+            throw e
+        }
     }
 
 }
