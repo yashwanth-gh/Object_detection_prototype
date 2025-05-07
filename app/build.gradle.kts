@@ -131,5 +131,5 @@ dependencies {
     implementation(platform("androidx.compose:compose-bom:2025.02.00"))
     implementation("io.coil-kt:coil-compose:2.6.0")
 
-
+    implementation("androidx.core:core-splashscreen:1.0.0")
 }

@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.objectdetectionapp.ui.components.AppContent
 import com.example.objectdetectionapp.ui.theme.ObjectDetectionAppTheme
 
@@ -53,6 +54,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        installSplashScreen()
         setContent {
             ObjectDetectionAppTheme {
                 // A surface container using the 'background' color from the theme

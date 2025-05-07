@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <style name="Theme.MySpalshScreen" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/spalsh_bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/detectcam_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.ObjectDetectionApp</item>
+    </style>
+
     <style name="Theme.ObjectDetectionApp" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>

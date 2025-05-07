@@ -1,15 +1,9 @@
 package com.example.objectdetectionapp.ui.navigation
 
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,8 +15,7 @@ import com.example.objectdetectionapp.ui.shared.DetectionScreen
 import com.example.objectdetectionapp.ui.shared.ModeSelectionScreen
 import com.example.objectdetectionapp.ui.surveillance.CameraPreviewScreen
 import com.example.objectdetectionapp.ui.surveillance.SurveillanceScreen
-import com.example.objectdetectionapp.ui.userSignIn.SignInScreen
-import com.example.objectdetectionapp.ui.userSignIn.SignInViewModel
+import com.example.objectdetectionapp.ui.userSignIn.IntroScreen
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -30,10 +23,10 @@ fun NavGraph(navController: NavHostController) {
     Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
-            startDestination = "sign_in" // Initial start destination
+            startDestination = "intro" // Initial start destination
         ) {
-            composable("sign_in") {
-                SignInScreen(navController = navController)
+            composable("intro") {
+                IntroScreen(navController = navController)
             }
             composable("mode_selection") {
                 ModeSelectionScreen(navController)

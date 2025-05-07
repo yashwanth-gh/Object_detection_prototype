@@ -15,9 +15,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class SignInViewModel(application: Application) : AndroidViewModel(application) {
+class IntroViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val TAG = "SignInViewModel"
+    private val TAG = "IntroViewModel"
     private val firebaseService = FirebaseServiceImpl()
     private val signInRepository = SignInRepository(application, firebaseService)
 

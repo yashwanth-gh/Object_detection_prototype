@@ -86,10 +86,10 @@ private fun ProfileSection(username: String) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Image(
-            painter = painterResource(id = R.drawable.ic_profile_placeholder_foreground),
+            painter = painterResource(id = R.drawable.ic_user_image_round),
             contentDescription = "Profile Picture",
             modifier = Modifier
-                .size(72.dp)
+                .size(80.dp)
                 .clip(CircleShape),
             contentScale = ContentScale.Crop
         )

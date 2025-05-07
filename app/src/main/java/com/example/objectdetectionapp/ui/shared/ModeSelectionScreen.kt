@@ -1,16 +1,20 @@
 package com.example.objectdetectionapp.ui.shared
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,10 +26,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.objectdetectionapp.R
 import com.example.objectdetectionapp.ui.components.AppLoadingScreen
 import com.example.objectdetectionapp.ui.components.NavigateWithPermissionAndLoading
 import java.util.UUID
@@ -103,24 +118,38 @@ fun ModeSelectionScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "Welcome!",
-                style = MaterialTheme.typography.headlineLarge
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Please select your device mode to continue",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                text = "Select App Mode",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = FontFamily.Cursive,
+                    fontWeight = FontWeight.Bold
+                ),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Image(
+                painter = painterResource(id = R.drawable.mode_trans),
+                contentDescription = "Device Mode Illustration",
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .aspectRatio(1f)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             ModeButton(
-                label = if (modeSelectionState == ModeSelectionViewModel.ModeSelectionState.Loading) "Connecting..." else "Surveillance Mode",
-                enabled = modeSelectionState != ModeSelectionViewModel.ModeSelectionState.Loading
+                label = if (modeSelectionState == ModeSelectionViewModel.ModeSelectionState.Loading) "Connecting..." else "Camera Mode",
+                enabled = modeSelectionState != ModeSelectionViewModel.ModeSelectionState.Loading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .shadow(4.dp)
             ) {
                 val uuid = UUID.randomUUID().toString()
                 viewModel.setMode("surveillance", uuid)
@@ -130,18 +159,63 @@ fun ModeSelectionScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             ModeButton(
-                label = if (modeSelectionState == ModeSelectionViewModel.ModeSelectionState.Loading) "Connecting..." else "Overlooker Mode",
-                enabled = modeSelectionState != ModeSelectionViewModel.ModeSelectionState.Loading
+                label = if (modeSelectionState == ModeSelectionViewModel.ModeSelectionState.Loading) "Connecting..." else "Monitor Mode",
+                enabled = modeSelectionState != ModeSelectionViewModel.ModeSelectionState.Loading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .shadow(4.dp)
             ) {
                 val uuid = UUID.randomUUID().toString()
                 viewModel.setMode("overlooker", uuid)
                 destination = "overlooker_pair/$uuid/overlooker"
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.ExtraBold)) {
+                            append("👉 Camera Mode: ")
+                        }
+                        append("Use this device to detect people and send alerts.")
+                    },
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = MaterialTheme.colorScheme.outline,
+                        fontStyle = FontStyle.Italic
+                    ),
+                    textAlign = TextAlign.Start
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.ExtraBold)) {
+                            append("👉 Monitor Mode: ")
+                        }
+                        append("Use this device to receive notifications and stay updated.")
+                    },
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = MaterialTheme.colorScheme.outline,
+                        fontStyle = FontStyle.Italic
+                    ),
+                    textAlign = TextAlign.Start
+                )
+            }
+
             if (modeSelectionState == ModeSelectionViewModel.ModeSelectionState.Loading) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
+
     }
 
     // Use NavigateWithPermissionAndLoading for permission handling and navigation
@@ -154,15 +228,35 @@ fun ModeSelectionScreen(
 }
 
 @Composable
-fun ModeButton(label: String, enabled: Boolean = true, onClick: () -> Unit) {
+fun ModeButton(
+    label: String,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Button(
         onClick = onClick,
-        modifier = Modifier
+        enabled = enabled,
+        modifier = modifier
+            .fillMaxWidth()
             .height(56.dp)
-            .fillMaxWidth(0.8f),
-        shape = RoundedCornerShape(10.dp),
-        enabled = enabled
+            .shadow(6.dp, RoundedCornerShape(16.dp)),
+        shape = MaterialTheme.shapes.medium,
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 6.dp,
+            pressedElevation = 10.dp,
+            disabledElevation = 0.dp
+        ),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+        )
     ) {
-        Text(text = label, style = MaterialTheme.typography.labelLarge)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.sp)
+        )
     }
 }

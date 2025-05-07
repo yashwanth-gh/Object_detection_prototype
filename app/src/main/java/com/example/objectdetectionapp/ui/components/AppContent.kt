@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.objectdetectionapp.ui.MainViewModel
 import com.example.objectdetectionapp.ui.MainViewModelFactory
@@ -35,41 +36,56 @@ fun AppContent() {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry?.destination?.route
+
     val currentMode by mainViewModel.userMode.collectAsState()
     val currentUuid by mainViewModel.userUUID.collectAsState()
     val connectedSurveillanceUUID by mainViewModel.connectedSurveillanceUUID.collectAsState()
     val userData by mainViewModel.userData.collectAsState()
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            SidePanel(
-                mode = currentMode,
-                uuid = currentUuid,
-                connectedSurveillanceUUID = connectedSurveillanceUUID,
-                username = userData.username,
-                email = userData.email,
-                navController = navController, // Pass navController
-                onCloseDrawer = { scope.launch { drawerState.close() } }
-            )
-        },
-        content = {
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = { Text("Object Detection App") },
-                        navigationIcon = {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Filled.Menu, contentDescription = "Open navigation drawer")
+    val showUIElements = currentRoute != "intro"
+
+    if (showUIElements) {
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                SidePanel(
+                    mode = currentMode,
+                    uuid = currentUuid,
+                    connectedSurveillanceUUID = connectedSurveillanceUUID,
+                    username = userData.username,
+                    email = userData.email,
+                    navController = navController,
+                    onCloseDrawer = { scope.launch { drawerState.close() } }
+                )
+            },
+            content = {
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = { Text("DetectCam") },
+                            navigationIcon = {
+                                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                    Icon(Icons.Filled.Menu, contentDescription = "Open navigation drawer")
+                                }
                             }
-                        }
-                    )
-                }
-            ) { paddingValues ->
-                Box(modifier = Modifier.padding(paddingValues)) {
-                    NavGraph(navController = navController)
+                        )
+                    }
+                ) { paddingValues ->
+                    Box(modifier = Modifier.padding(paddingValues)) {
+                        NavGraph(navController = navController)
+                    }
                 }
             }
+        )
+    } else {
+        Scaffold(
+            topBar = {} // No top bar
+        ) { paddingValues ->
+            Box(modifier = Modifier.padding(paddingValues)) {
+                NavGraph(navController = navController)
+            }
         }
-    )
+    }
 }
