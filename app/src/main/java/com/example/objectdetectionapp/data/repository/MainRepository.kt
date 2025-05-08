@@ -6,6 +6,9 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.objectdetectionapp.data.firebase.FirebaseService
+import com.example.objectdetectionapp.data.models.SurveillanceDevice
+import com.example.objectdetectionapp.data.models.User
+import com.example.objectdetectionapp.utils.Resource
 import com.example.objectdetectionapp.utils.retryOperation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -62,18 +65,22 @@ class MainRepository(
     }
 
 
-    suspend fun saveModeAndUUIDToFirebase(mode: String, uuid: String) {
+    suspend fun saveModeAndUUIDToFirebase(
+        mode: String,
+        uuid: String,
+        user: User
+    ) {
         retryOperation(
             maxAttempts = 3,
             delayMillis = 1500,
             operationName = "saveSurveillanceDevice"
         ) {
-        firebaseService.saveSurveillanceDevice(uuid)
+            firebaseService.saveSurveillanceDevice(uuid,user)
         }
         saveUserModeAndUUIDToDatastore(mode, uuid)
     }
 
-     suspend fun saveFCMTokenToFirebase(uuid: String) {
+    suspend fun saveFCMTokenToFirebase(uuid: String) {
         try {
             Log.d(TAG, "saveFCMTokenToFirebase triggered")
 
@@ -91,7 +98,7 @@ class MainRepository(
         }
     }
 
-    suspend fun getFullUUIDFromPairingCode(pairingCode: String): String?{
+    suspend fun getFullUUIDFromPairingCode(pairingCode: String): String? {
         return try {
             // Retry fetching the UUID based on the pairing code
             retryOperation(maxAttempts = 3, delayMillis = 1500, operationName = "Get Full UUID") {
@@ -102,5 +109,19 @@ class MainRepository(
             null
         }
     }
+
+    suspend fun fetchSurveillanceDevice(uuid: String): Resource<SurveillanceDevice> {
+        return try {
+            val device = firebaseService.getSurveillanceDevice(uuid)
+            if (device != null) {
+                Resource.Success(device)
+            } else {
+                Resource.Error(Exception("Device not found"))
+            }
+        } catch (e: Exception) {
+            Resource.Error(e)
+        }
+    }
+
 
 }

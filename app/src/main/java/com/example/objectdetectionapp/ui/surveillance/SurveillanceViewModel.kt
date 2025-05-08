@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.objectdetectionapp.data.models.BoundingBox
 import com.example.objectdetectionapp.data.models.Detection
+import com.example.objectdetectionapp.data.models.SurveillanceDevice
 import com.example.objectdetectionapp.data.repository.NotificationRepository
 import com.example.objectdetectionapp.data.repository.MainRepository
 import com.example.objectdetectionapp.domain.usecases.SaveDetectionUseCase
@@ -32,16 +33,28 @@ class SurveillanceViewModel(
 
     private var lastDetectionSaveTime: Long = 0L
     private val detectionSaveCoolDownDurationMillis =
-        TimeUnit.MINUTES.toMillis(30) // Save every 30 minutes
+        TimeUnit.MINUTES.toMillis(3) // Save every 10 minutes
+
+    private val _deviceData = MutableStateFlow<Resource<SurveillanceDevice>>(Resource.Loading())
+    val deviceData: StateFlow<Resource<SurveillanceDevice>> = _deviceData.asStateFlow()
 
     init {
         viewModelScope.launch {
             repository.userUUID.collect { uuid ->
                 if (uuid != null) {
                     _surveillanceUUID.value = uuid
+                    getSurveillanceDeviceData(uuid)
                 }
                 Log.d("SurveillanceVM", "UUID: $uuid")
             }
+        }
+    }
+
+    private fun getSurveillanceDeviceData(uuid: String) {
+        viewModelScope.launch {
+            _deviceData.value = Resource.Loading() // Set loading state
+            val result = repository.fetchSurveillanceDevice(uuid)
+            _deviceData.value = result // Update with the result (Success or Error)
         }
     }
 
@@ -97,14 +110,24 @@ class SurveillanceViewModel(
                     )
 
                     if (uuid != null) {
-                        saveDetectionUseCase.execute(detection, currentFrame,surveillanceUUID = uuid).collect { resource ->
+                        saveDetectionUseCase.execute(
+                            detection,
+                            currentFrame,
+                            surveillanceUUID = uuid
+                        ).collect { resource ->
                             when (resource) {
                                 is Resource.Success -> {
-                                    Log.d("SurveillanceVM", "Detection saved with ID: ${resource.data}")
+                                    Log.d(
+                                        "SurveillanceVM",
+                                        "Detection saved with ID: ${resource.data}"
+                                    )
                                 }
 
                                 is Resource.Error -> {
-                                    Log.e("SurveillanceVM", "Save error: ${resource.throwable.message}")
+                                    Log.e(
+                                        "SurveillanceVM",
+                                        "Save error: ${resource.throwable.message}"
+                                    )
                                 }
 
                                 is Resource.Loading -> {

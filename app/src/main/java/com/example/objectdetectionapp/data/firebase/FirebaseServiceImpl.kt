@@ -3,6 +3,8 @@ package com.example.objectdetectionapp.data.firebase
 import android.util.Log
 import com.example.objectdetectionapp.data.models.BoundingBox
 import com.example.objectdetectionapp.data.models.Detection
+import com.example.objectdetectionapp.data.models.Overlooker
+import com.example.objectdetectionapp.data.models.SurveillanceDevice
 import com.example.objectdetectionapp.data.models.User
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -20,7 +22,7 @@ class FirebaseServiceImpl : FirebaseService {
     private val database = FirebaseDatabase.getInstance().reference
     private val _tag = "FirebaseServiceImpl"
 
-    override suspend fun saveSurveillanceDevice(uuid: String) {
+    override suspend fun saveSurveillanceDevice(uuid: String, user:User) {
         try {
             // Generate the pairing code from the first 6 characters of the UUID (you can adjust this)
             val pairingCode = uuid.take(6)
@@ -28,16 +30,20 @@ class FirebaseServiceImpl : FirebaseService {
             // Save the Surveillance device data, including pairing code
             val deviceData = mapOf(
                 "status" to "active",
-                "pairingCode" to pairingCode
+                "pairingCode" to pairingCode,
+                "user" to mapOf(
+                    "username" to user.username,
+                    "email" to user.email
+                )
             )
             database.child("surveillance_devices")
                 .child(uuid)
                 .setValue(deviceData)
                 .await()
-            Log.d(_tag, "UUID $uuid saved to Firebase")
+            Log.d(_tag, "UUID $uuid and user data saved to Firebase")
 
         } catch (e: Exception) {
-            Log.e(_tag, "Failed to save UUID: ${e.message}")
+            Log.e(_tag, "Failed to save UUID and user data: ${e.message}")
             throw e
         }
     }
@@ -69,7 +75,8 @@ class FirebaseServiceImpl : FirebaseService {
 
     override suspend fun addOverlookerToSurveillance(
         surveillanceUUID: String,
-        overlookerUUID: String
+        overlookerUUID: String,
+        user:User
     ) {
         try {
             val path = database.child("surveillance_devices")
@@ -77,7 +84,7 @@ class FirebaseServiceImpl : FirebaseService {
                 .child("overlookers")
                 .child(overlookerUUID)
 
-            path.setValue(true).await()
+            path.setValue(user).await()
             Log.d(_tag, "Overlooker $overlookerUUID added under $surveillanceUUID")
         } catch (e: Exception) {
             Log.e(_tag, "Failed to add Overlooker: ${e.message}")
@@ -228,5 +235,43 @@ class FirebaseServiceImpl : FirebaseService {
             throw e
         }
     }
+
+    override suspend fun getSurveillanceDevice(uuid: String): SurveillanceDevice? {
+        return try {
+            val snapshot = database.child("surveillance_devices").child(uuid).get().await()
+            if (snapshot.exists()) {
+                val status = snapshot.child("status").getValue(String::class.java) ?: "unknown"
+                val pairingCode = snapshot.child("pairingCode").getValue(String::class.java) ?: "N/A"
+
+                val userSnapshot = snapshot.child("user")
+                val user = User(
+                    username = userSnapshot.child("username").getValue(String::class.java) ?: "Unknown",
+                    email = userSnapshot.child("email").getValue(String::class.java) ?: ""
+                )
+
+                val overlookersMap = mutableMapOf<String, Overlooker>()
+                val overlookersSnapshot = snapshot.child("overlookers")
+                for (child in overlookersSnapshot.children) {
+                    val overlooker = child.getValue(Overlooker::class.java)
+                    if (overlooker != null) {
+                        overlookersMap[child.key ?: ""] = overlooker
+                    }
+                }
+
+                SurveillanceDevice(
+                    pairingCode = pairingCode,
+                    status = status,
+                    user = user,
+                    overlookers = overlookersMap
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(_tag, "Error fetching surveillance device: ${e.message}")
+            null
+        }
+    }
+
 
 }

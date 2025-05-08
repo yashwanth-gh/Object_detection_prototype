@@ -30,15 +30,16 @@ class NotificationRepository(
 
     suspend fun sendPairingNotificationToSurveillance(
         surveillanceUUID: String,
-        overlookerUUID: String
+        overlookerUUID: String,
+        userName:String = "new user"
     ) {
         val token = firebaseService.getSurveillanceFCMToken(surveillanceUUID)
 
         if (!token.isNullOrEmpty()) {
             fcmService.sendNotificationToToken(
                 token = token,
-                title = "You are Paired! 🔗",
-                body = "Hi, you are connected to:\nUUID: $overlookerUUID"
+                title = "New device Paired! 🔗",
+                body = "Hi, you are connected to $userName"
             )
         } else {
             Log.w(

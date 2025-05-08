@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.objectdetectionapp.data.repository.NotificationRepository
 import com.example.objectdetectionapp.data.repository.MainRepository
+import com.example.objectdetectionapp.data.repository.SignInRepository
 import com.example.objectdetectionapp.domain.usecases.PairOverlookerWithSurveillanceUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +17,8 @@ class OverlookerPairViewModel(
     private val overlookerUUID: String,
     private val pairUseCase: PairOverlookerWithSurveillanceUseCase,
     private val notificationRepository:NotificationRepository,
-    private val mainRepository:MainRepository
+    private val mainRepository:MainRepository,
+    private val signInRepository: SignInRepository
 ) : ViewModel() {
 
     sealed class PairingState {
@@ -46,9 +48,19 @@ class OverlookerPairViewModel(
                 return@launch
             }
 
+            // Fetch user from SignInRepository
+            val user = withContext(Dispatchers.IO) {
+                signInRepository.getUserDetails()
+            }
+
+            if (user == null) {
+                _pairingState.value = PairingState.Error("User not signed in.")
+                return@launch
+            }
+
             // Execute the pairing use case on IO thread
             val result = withContext(Dispatchers.IO) {
-                pairUseCase.execute(fullUUID, overlookerUUID)
+                pairUseCase.execute(fullUUID, overlookerUUID,user)
             }
 
             _pairingState.value = if (result.isSuccess) {
@@ -65,12 +77,26 @@ class OverlookerPairViewModel(
     fun notifySurveillanceOfPairing(surveillanceUUID: String) {
         viewModelScope.launch {
             try {
+                // Fetch user from SignInRepository
+                val user = withContext(Dispatchers.IO) {
+                    signInRepository.getUserDetails()
+                }
+
+
                 // Send notification on IO thread
                 withContext(Dispatchers.IO) {
-                    notificationRepository.sendPairingNotificationToSurveillance(
-                        surveillanceUUID,
-                        overlookerUUID
-                    )
+                    if (user != null) {
+                        notificationRepository.sendPairingNotificationToSurveillance(
+                            surveillanceUUID,
+                            overlookerUUID,
+                            user.username
+                        )
+                    }else{
+                        notificationRepository.sendPairingNotificationToSurveillance(
+                            surveillanceUUID,
+                            overlookerUUID
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("OverlookerVM", "Notification error: ${e.message}", e)

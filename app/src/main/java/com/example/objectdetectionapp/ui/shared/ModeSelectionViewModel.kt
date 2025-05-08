@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.objectdetectionapp.data.models.UserSessionData
 import com.example.objectdetectionapp.data.repository.MainRepository
+import com.example.objectdetectionapp.data.repository.SignInRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +15,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
-class ModeSelectionViewModel(private val repository: MainRepository) : ViewModel() {
+class ModeSelectionViewModel(
+    private val repository: MainRepository,
+    private val signInRepository: SignInRepository
+) : ViewModel() {
 
     sealed class ModeSelectionState {
         data object Idle : ModeSelectionState()
@@ -56,16 +59,24 @@ class ModeSelectionViewModel(private val repository: MainRepository) : ViewModel
         viewModelScope.launch {
             _modeSelectionState.value = ModeSelectionState.Loading
             try {
+                val user = signInRepository.getUserDetails()
+                if (user == null) {
+                    _modeSelectionState.value = ModeSelectionState.Error("User not signed in.")
+                    return@launch
+                }
+
                 if (mode == "surveillance") {
                     kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
                         try {
                             withContext(kotlinx.coroutines.NonCancellable) {
-                                repository.saveModeAndUUIDToFirebase(mode, uuid)
+                                repository.saveModeAndUUIDToFirebase(mode, uuid, user)
                             }
                             _modeSelectionState.value = ModeSelectionState.Success
                             Log.d(_tag, "Surveillance data saved to Firebase")
                         } catch (e: Exception) {
-                            _modeSelectionState.value = ModeSelectionState.Error(e.localizedMessage ?: "Failed to save mode.")
+                            _modeSelectionState.value = ModeSelectionState.Error(
+                                e.localizedMessage ?: "Failed to save mode."
+                            )
                             Log.e(_tag, "Failed to save surveillance data: $e")
                         }
                     }
@@ -78,7 +89,9 @@ class ModeSelectionViewModel(private val repository: MainRepository) : ViewModel
                             _modeSelectionState.value = ModeSelectionState.Success
                             Log.d(_tag, "Overlooker mode saved locally")
                         } catch (e: Exception) {
-                            _modeSelectionState.value = ModeSelectionState.Error(e.localizedMessage ?: "Failed to save mode.")
+                            _modeSelectionState.value = ModeSelectionState.Error(
+                                e.localizedMessage ?: "Failed to save mode."
+                            )
                             Log.e(_tag, "Failed to save overlooker mode: $e")
                         }
                     }

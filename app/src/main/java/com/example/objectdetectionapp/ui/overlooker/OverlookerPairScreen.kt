@@ -2,6 +2,7 @@ package com.example.objectdetectionapp.ui.overlooker
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,7 +14,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,11 +32,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.objectdetectionapp.R
 import com.example.objectdetectionapp.ui.components.NavigateWithPermissionAndLoading
 import kotlinx.coroutines.launch
 
@@ -97,50 +105,59 @@ fun OverlookerPairScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Connect to SURVEILLANCE DEVICE",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
+            text = "Connect with Camera Device",
+            style = MaterialTheme.typography.headlineLarge.copy(
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                fontFamily = FontFamily.Cursive
+            )
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        Text(
-            text = "to connect, follow the steps below:",
-            fontSize = 14.sp,
-            color = Color.Gray
+        Image(
+            painter = painterResource(id = R.drawable.device_pair),
+            contentDescription = null,
+            modifier = Modifier
+                .height(180.dp)
+                .fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "where to find id",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color.DarkGray
+            text = "To connect, follow the steps below:",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "How to Connect",
+            style = MaterialTheme.typography.titleSmall.copy(
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary
+            )
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = """
-        1. on the other device, select surveillance mode.
-        2. after selecting, it will display an id on the screen.
-        3. enter that id below to link this device as an overlooker.
-    """.trimIndent(),
-            fontSize = 14.sp,
-            color = Color.Gray,
-            lineHeight = 20.sp
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "this device's id: $overlookerUUID",
-            fontSize = 13.sp,
-            color = Color.DarkGray
+            1. On the other device, select Camera Mode.
+            2. It will display a 6-digit pairing code.
+            3. Enter that code below to link this device.
+        """.trimIndent(),
+            style = MaterialTheme.typography.bodySmall.copy(
+                lineHeight = 20.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -148,10 +165,9 @@ fun OverlookerPairScreen(
         OutlinedTextField(
             value = pairingCode,
             onValueChange = { pairingCode = it },
-            label = { Text("Surveillance Pairing Code") },
+            label = { Text("Enter 6-digit Pairing Code") },
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp)),
+                .fillMaxWidth(),
             singleLine = true,
             isError = pairingCode.length != 6
         )
@@ -165,27 +181,31 @@ fun OverlookerPairScreen(
                         viewModel.pairWithSurveillanceDevice(pairingCode.trim())
                     }
                 } else {
-                    Toast.makeText(context, "Invalid pairing code. Please enter a 6-character code.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Invalid pairing code.", Toast.LENGTH_SHORT).show()
                 }
             },
             modifier = Modifier
-                .height(56.dp)
-                .fillMaxWidth(0.8f),
-            shape = RoundedCornerShape(10.dp),
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color.White
+            ),
             enabled = pairingState != OverlookerPairViewModel.PairingState.Loading
         ) {
             if (pairingState == OverlookerPairViewModel.PairingState.Loading) {
                 CircularProgressIndicator(
                     color = Color.White,
                     strokeWidth = 2.dp,
-                    modifier = Modifier
-                        .size(18.dp)
+                    modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Connecting...")
             } else {
-                Text("Connect")
+                Text("Connect", style = MaterialTheme.typography.labelLarge)
             }
         }
     }
+
 }

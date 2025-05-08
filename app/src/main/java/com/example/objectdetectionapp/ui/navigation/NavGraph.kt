@@ -61,7 +61,8 @@ fun NavGraph(navController: NavHostController) {
 
                 OverlookerHomeScreen(
                     overlookerUUID = overlookerUUID,
-                    surveillanceUUID = surveillanceUUID
+                    surveillanceUUID = surveillanceUUID,
+                    navController = navController
                 )
             }
 
