@@ -19,6 +19,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -64,7 +67,14 @@ fun AppContent() {
                 Scaffold(
                     topBar = {
                         TopAppBar(
-                            title = { Text("DetectCam") },
+                            title = {
+                                Text(
+                                    "DetectCam",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = FontFamily.Cursive
+                                )
+                            },
                             navigationIcon = {
                                 IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                     Icon(Icons.Filled.Menu, contentDescription = "Open navigation drawer")

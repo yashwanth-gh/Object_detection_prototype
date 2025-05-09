@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -21,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -32,8 +34,8 @@ fun SidePanel(
     mode: String? = "No Mode",
     uuid: String? = "NaN",
     connectedSurveillanceUUID: String? = "NaN",
-    username: String,
-    email: String,
+    username: String = "User",
+    email: String = "example@gmail.com",
     navController: NavHostController,
     onCloseDrawer: () -> Unit
 ) {
@@ -48,18 +50,7 @@ fun SidePanel(
                 .padding(16.dp),
             horizontalAlignment = Alignment.Start
         ) {
-            // Profile Section
-            ProfileSection(username)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // User Session Info Section
-            if (!mode.isNullOrBlank() && mode != "No Mode" && !uuid.isNullOrBlank() && uuid != "NaN") {
-                UserSessionInfo(mode, uuid, connectedSurveillanceUUID)
-                Spacer(modifier = Modifier.height(16.dp))
-                Divider()
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+            ProfileSection(username, navController,onCloseDrawer = onCloseDrawer)
 
             // Navigation Links
             NavigationLinks(
@@ -80,10 +71,16 @@ fun SidePanel(
 }
 
 @Composable
-private fun ProfileSection(username: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth()
+private fun ProfileSection(
+    username: String,
+    navController: NavHostController,
+    onCloseDrawer: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
     ) {
         Image(
             painter = painterResource(id = R.drawable.ic_user_image_round),
@@ -94,36 +91,29 @@ private fun ProfileSection(username: String) {
             contentScale = ContentScale.Crop
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
-        Text(
-            text = "Hi! $username",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-private fun UserSessionInfo(
-    mode: String?,
-    uuid: String?,
-    connectedSurveillanceUUID: String?
-) {
-    Column {
-        InfoRow("Mode:", mode ?: "")
-        Spacer(modifier = Modifier.height(8.dp))
-        InfoRow("UUID:", uuid ?: "")
-
-        // Show connected surveillance UUID for overlooker mode
-        if (mode?.lowercase() == "overlooker" &&
-            !connectedSurveillanceUUID.isNullOrBlank() &&
-            connectedSurveillanceUUID != "NaN"
-        ) {
-            Spacer(modifier = Modifier.height(8.dp))
-            InfoRow("Connected Surveillance UUID:", connectedSurveillanceUUID)
+        Column {
+            Text(
+                text = username,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "view profile",
+                style = MaterialTheme.typography.bodyMedium,
+                textDecoration = TextDecoration.Underline,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.clickable {
+                    navController.navigate("user_profile")
+                    onCloseDrawer()
+                }
+            )
         }
     }
+    Spacer(modifier = Modifier.height(4.dp))
+    HorizontalDivider()
 }
 
 @Composable
@@ -156,10 +146,12 @@ private fun NavigationLinks(
                 mode?.lowercase() == "surveillance" && !uuid.isNullOrBlank() -> {
                     navController.navigate("surveillance/${uuid}/${mode}")
                 }
+
                 mode?.lowercase() == "overlooker" && !uuid.isNullOrBlank() &&
                         !connectedSurveillanceUUID.isNullOrBlank() -> {
                     navController.navigate("overlooker_home/${uuid}/${connectedSurveillanceUUID}")
                 }
+
                 else -> {
                     Toast.makeText(context, "Missing UUID or mode!", Toast.LENGTH_SHORT).show()
                 }

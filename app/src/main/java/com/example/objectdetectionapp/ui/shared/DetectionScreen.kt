@@ -1,5 +1,8 @@
 package com.example.objectdetectionapp.ui.shared
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -7,16 +10,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -25,8 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -35,122 +40,325 @@ import com.example.objectdetectionapp.data.models.Detection
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import android.content.Intent
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.net.Uri
+import android.widget.Toast
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun DetectionScreen() {
     val context = LocalContext.current
 
     val detectionViewModel: DetectionViewModel = viewModel(
-        factory = DetectionViewModel.provideFactory(context)
+        factory = DetectionViewModelFactory(context)
     )
     val detections by detectionViewModel.detections.collectAsState()
+    val isLoading = detections.isEmpty() && detectionViewModel.isLoading.collectAsState().value
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Detections") })
-        },
-        content = { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                if (detections.isEmpty()) {
-                    Text("No detections available.", style = MaterialTheme.typography.bodyMedium)
-                } else {
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(detections) { detection ->
-                            DetectionCard(detection = detection)
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
+    var sortMostRecentFirst by remember { mutableStateOf(true) }
+    val sortedDetections = remember(detections, sortMostRecentFirst) {
+        if (sortMostRecentFirst) {
+            detections.sortedByDescending { it.timestamp }
+        } else {
+            detections.sortedBy { it.timestamp }
+        }
+    }
+
+    if (isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .padding(6.dp)
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            )
+            {
+
+                Text(
+                    "Recent detections",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Cursive
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (sortMostRecentFirst) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                        contentDescription = if (sortMostRecentFirst) "Show Oldest First" else "Show Most Recent First",
+                        modifier = Modifier
+                            .clickable { sortMostRecentFirst = !sortMostRecentFirst }
+                            .padding(4.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = if (sortMostRecentFirst) "Oldest first" else "Recent first",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(end =  4.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider()
+
+            if (detections.isEmpty()) {
+                Text(
+                    "No detections available.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(sortedDetections) { detection ->
+                        DetectionCard(
+                            detection = detection,
+                            onDownloadClick = { imageUrl ->
+                                detectionViewModel.saveImageToGallery(
+                                    context,
+                                    imageUrl
+                                )
+                            }
+                        )
                     }
                 }
             }
         }
-    )
+    }
 }
 
 
 @Composable
-fun DetectionCard(detection: Detection) {
+fun DetectionCard(
+    detection: Detection,
+    onDownloadClick: (String?) -> Unit
+) {
+    val context = LocalContext.current
+    val date = Date(detection.timestamp)
+    val dateFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+    val timeFormatter = SimpleDateFormat("hh:mm a", Locale.getDefault())
+    val confidencePercent = (detection.confidence * 100).toInt()
+
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            .padding(vertical = 8.dp, horizontal = 12.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(6.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Image
             detection.imagePath?.let { imageUrl ->
-                val context = LocalContext.current
+                val uri = Uri.parse(imageUrl)
+
                 AsyncImage(
                     model = ImageRequest.Builder(context)
-                        .data(imageUrl)
-                        .size(Size.ORIGINAL)
+                        .data(uri)
                         .crossfade(true)
+                        .size(Size.ORIGINAL)
                         .build(),
                     contentDescription = "Detection Image",
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp)
-                        .clip(RoundedCornerShape(8.dp)),
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+                                setDataAndType(uri, "image/*")
+                                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            }
+                            context.startActivity(viewIntent)
+                        },
                     contentScale = ContentScale.Crop
                 )
-                Spacer(modifier = Modifier.height(12.dp))
             }
-            Text(
-                text = detection.label.capitalize(Locale.getDefault()),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Confidence:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(end = 4.dp)
-                )
-                Text(
-                    text = String.format("%.2f", detection.confidence),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+
             Spacer(modifier = Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = "Timestamp:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(end = 4.dp)
-                )
-                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                val date = Date(detection.timestamp)
-                Text(
-                    text = sdf.format(date),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row {
-                Text(
-                    text = "Bounding Box:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(end = 4.dp)
+                    text = dateFormatter.format(date), // "08 May 2025"
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "x=${detection.boundingBox.x}, y=${detection.boundingBox.y}, width=${detection.boundingBox.width}, height=${detection.boundingBox.height}",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = timeFormatter.format(date), // "03:45 PM"
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Row: Type + Confidence
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                TypeBadge(type = detection.label)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = " Confidence : $confidencePercent%",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = {
+                        val shareText = buildString {
+                            append("🚨 Detection Alert 🚨\n\n")
+                            append("• Type: ${detection.label.replaceFirstChar { it.uppercaseChar() }}\n")
+                            append("• Confidence: $confidencePercent%\n")
+                            append("• Date: ${dateFormatter.format(date)}\n")
+                            append("• Time: ${timeFormatter.format(date)}\n")
+                            append("• Image: ${detection.imagePath ?: "N/A"}\n")
+                        }
+
+                        val clipboard =
+                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        clipboard.setPrimaryClip(ClipData.newPlainText("Detection Info", shareText))
+
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, shareText)
+                        }
+                        context.startActivity(
+                            Intent.createChooser(
+                                shareIntent,
+                                "Share Detection Info"
+                            )
+                        )
+
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Share"
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Share")
+                }
+
+                Button(
+                    onClick = {
+                        val detectionText = buildString {
+                            append("🚨 Detection Info 🚨\n")
+                            append("• Type: ${detection.label}\n")
+                            append("• Confidence: $confidencePercent%\n")
+                            append("• Date: ${dateFormatter.format(date)}\n")
+                            append("• Time: ${timeFormatter.format(date)}\n")
+                            append("• Image URL: ${detection.imagePath ?: "N/A"}")
+                        }
+
+                        val clipboard =
+                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        clipboard.setPrimaryClip(ClipData.newPlainText("Detection", detectionText))
+                        Toast.makeText(
+                            context,
+                            "Detection info copied to clipboard",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Copy"
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Copy")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Button(
+                onClick = { onDownloadClick(detection.imagePath) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp)),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = "download"
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Download", color = MaterialTheme.colorScheme.onPrimary)
+            }
+
         }
+    }
+}
+
+
+@Composable
+fun TypeBadge(type: String) {
+    Box(
+        modifier = Modifier
+            .background(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = "Type: ${type.replaceFirstChar { it.uppercaseChar() }}",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Medium
+        )
     }
 }

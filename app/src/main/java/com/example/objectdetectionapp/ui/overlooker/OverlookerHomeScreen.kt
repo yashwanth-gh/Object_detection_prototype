@@ -62,7 +62,7 @@ fun OverlookerHomeScreen(
     ) {
 
         Text(
-            text = "Overlooker Dashboard",
+            text = "Monitoring Dashboard",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Cursive
