@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
@@ -51,6 +52,8 @@ fun SidePanel(
             horizontalAlignment = Alignment.Start
         ) {
             ProfileSection(username, navController,onCloseDrawer = onCloseDrawer)
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Navigation Links
             NavigationLinks(
@@ -140,31 +143,30 @@ private fun NavigationLinks(
     // Home Button
     NavigationButton(
         text = "Home",
-        icon = Icons.Filled.Home,
-        onClick = {
-            when {
-                mode?.lowercase() == "surveillance" && !uuid.isNullOrBlank() -> {
-                    navController.navigate("surveillance/${uuid}/${mode}")
-                }
-
-                mode?.lowercase() == "overlooker" && !uuid.isNullOrBlank() &&
-                        !connectedSurveillanceUUID.isNullOrBlank() -> {
-                    navController.navigate("overlooker_home/${uuid}/${connectedSurveillanceUUID}")
-                }
-
-                else -> {
-                    Toast.makeText(context, "Missing UUID or mode!", Toast.LENGTH_SHORT).show()
-                }
+        icon = Icons.Filled.Home
+    ) {
+        when {
+            mode?.lowercase() == "surveillance" && !uuid.isNullOrBlank() -> {
+                navController.navigate("surveillance/${uuid}/${mode}")
             }
-            onCloseDrawer()
+
+            mode?.lowercase() == "overlooker" && !uuid.isNullOrBlank() &&
+                    !connectedSurveillanceUUID.isNullOrBlank() -> {
+                navController.navigate("overlooker_home/${uuid}/${connectedSurveillanceUUID}")
+            }
+
+            else -> {
+                Toast.makeText(context, "Missing UUID or mode!", Toast.LENGTH_SHORT).show()
+            }
         }
-    )
+        onCloseDrawer()
+    }
 
     // Manage Devices Button (Only for Surveillance Mode)
     if (mode?.lowercase() == "surveillance") {
         NavigationButton(
             text = "Manage Devices",
-            icon = Icons.Filled.Settings, // Using Settings icon as a placeholder
+            icon = Icons.Filled.Build, // Using Settings icon as a placeholder
             onClick = {
                 navController.navigate("manage_devices/${uuid}")
                 onCloseDrawer()

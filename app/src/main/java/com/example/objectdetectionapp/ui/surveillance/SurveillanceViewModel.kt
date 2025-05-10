@@ -12,6 +12,7 @@ import com.example.objectdetectionapp.data.repository.MainRepository
 import com.example.objectdetectionapp.domain.usecases.SaveDetectionUseCase
 import com.example.objectdetectionapp.tflite.EfficientDetLiteDetector
 import com.example.objectdetectionapp.utils.Resource
+import com.example.objectdetectionapp.utils.SoundManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +23,8 @@ import java.util.concurrent.TimeUnit
 class SurveillanceViewModel(
     private val repository: MainRepository,
     private val notificationRepository: NotificationRepository,
-    private val saveDetectionUseCase: SaveDetectionUseCase
+    private val saveDetectionUseCase: SaveDetectionUseCase,
+    private val soundManager: SoundManager
 ) : ViewModel() {
 
     private var _surveillanceUUID = MutableStateFlow("")
@@ -34,6 +36,9 @@ class SurveillanceViewModel(
     private var lastDetectionSaveTime: Long = 0L
     private val detectionSaveCoolDownDurationMillis =
         TimeUnit.MINUTES.toMillis(3) // Save every 10 minutes
+
+    private var lastPersonSoundTime: Long = 0L
+    private var personSoundCoolDownDurationMillis = TimeUnit.SECONDS.toMillis(10)
 
     private val _deviceData = MutableStateFlow<Resource<SurveillanceDevice>>(Resource.Loading())
     val deviceData: StateFlow<Resource<SurveillanceDevice>> = _deviceData.asStateFlow()
@@ -71,6 +76,11 @@ class SurveillanceViewModel(
         if (personDetections.isEmpty()) return
 
         val currentTime = System.currentTimeMillis()
+
+        if (currentTime - lastPersonSoundTime >= personSoundCoolDownDurationMillis) {
+            lastPersonSoundTime = currentTime
+            soundManager.playPersonDetectedSound()
+        }
 
         // Handle both cool down checks in parallel instead of sequentially
         if (currentTime - lastNotificationTime >= notificationCoolDownDurationMillis) {

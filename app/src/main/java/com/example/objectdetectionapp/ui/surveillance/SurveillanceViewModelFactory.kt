@@ -10,6 +10,7 @@ import com.example.objectdetectionapp.data.repository.DetectionRepositoryImpl
 import com.example.objectdetectionapp.data.repository.NotificationRepository
 import com.example.objectdetectionapp.data.repository.MainRepository
 import com.example.objectdetectionapp.domain.usecases.SaveDetectionUseCase
+import com.example.objectdetectionapp.utils.SoundManager
 
 
 class SurveillanceViewModelFactory(
@@ -23,8 +24,9 @@ class SurveillanceViewModelFactory(
         val notificationRepository = NotificationRepository(fcmService,firebaseService)
         val detectionRepository = DetectionRepositoryImpl(firebaseDataStorage,firebaseService, context)
         val saveDetectionUseCase = SaveDetectionUseCase(detectionRepository)
+        val soundManager = SoundManager(context.applicationContext)
 
         @Suppress("UNCHECKED_CAST")
-        return SurveillanceViewModel(repository,notificationRepository,saveDetectionUseCase) as T
+        return SurveillanceViewModel(repository,notificationRepository,saveDetectionUseCase,soundManager) as T
     }
 }
