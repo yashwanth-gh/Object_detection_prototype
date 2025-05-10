@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.objectdetectionapp.data.firebase.FirebaseService
+import com.example.objectdetectionapp.data.models.Overlooker
 import com.example.objectdetectionapp.data.models.SurveillanceDevice
 import com.example.objectdetectionapp.data.models.User
 import com.example.objectdetectionapp.utils.Resource
@@ -75,7 +76,7 @@ class MainRepository(
             delayMillis = 1500,
             operationName = "saveSurveillanceDevice"
         ) {
-            firebaseService.saveSurveillanceDevice(uuid,user)
+            firebaseService.saveSurveillanceDevice(uuid, user)
         }
         saveUserModeAndUUIDToDatastore(mode, uuid)
     }
@@ -123,5 +124,43 @@ class MainRepository(
         }
     }
 
+    suspend fun getPairedOverlookers(surveillanceUUID: String): Resource<List<Overlooker>> {
+        return try {
+            val overlookers = firebaseService.getOverlookersForSurveillance(surveillanceUUID)
+            Resource.Success(overlookers)
+        } catch (e: Exception) {
+            Resource.Error(e)
+        }
+    }
+
+    suspend fun deleteOverlooker(surveillanceUUID: String, overlookerUUID: String): Resource<Unit> {
+        return try {
+            firebaseService.deleteOverlookerFromSurveillance(surveillanceUUID, overlookerUUID)
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e)
+        }
+    }
+
+    suspend fun isOverlookerPaired(
+        surveillanceUUID: String,
+        overlookerUUID: String
+    ): Resource<Boolean> {
+        return try {
+            val overlooker =
+                firebaseService.getOverlookerForSurveillanceDevice(surveillanceUUID, overlookerUUID)
+            Resource.Success(overlooker != null)
+        } catch (e: Exception) {
+            Resource.Error(e)
+        }
+    }
+
+    suspend fun clearUserData() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(MODE_KEY)
+            preferences.remove(UUID_KEY)
+            preferences.remove(stringPreferencesKey("surveillance_uuid"))
+        }
+    }
 
 }

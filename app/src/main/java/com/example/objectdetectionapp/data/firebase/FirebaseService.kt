@@ -1,14 +1,20 @@
 package com.example.objectdetectionapp.data.firebase
 
 import com.example.objectdetectionapp.data.models.Detection
+import com.example.objectdetectionapp.data.models.Overlooker
 import com.example.objectdetectionapp.data.models.SurveillanceDevice
 import com.example.objectdetectionapp.data.models.User
 import kotlinx.coroutines.flow.Flow
 
 interface FirebaseService {
-    suspend fun saveSurveillanceDevice(uuid: String, user:User)
+    suspend fun saveSurveillanceDevice(uuid: String, user: User)
     suspend fun isValidSurveillanceUUID(uuid: String): Boolean
-    suspend fun addOverlookerToSurveillance(surveillanceUUID: String, overlookerUUID: String,user:User)
+    suspend fun addOverlookerToSurveillance(
+        surveillanceUUID: String,
+        overlookerUUID: String,
+        user: User
+    )
+
     suspend fun getTokenAndSaveToDatabase(uuid: String)
     suspend fun getOverlookerFCMTokens(surveillanceUUID: String): List<String>
     suspend fun getSurveillanceFCMToken(surveillanceUUID: String): String?
@@ -17,5 +23,13 @@ interface FirebaseService {
     suspend fun fetchDetectionDetails(surveillanceUUID: String): Flow<List<Detection>>
     suspend fun saveUser(user: User)
     suspend fun getSurveillanceDevice(uuid: String): SurveillanceDevice?
+    suspend fun getOverlookersForSurveillance(surveillanceUUID: String): List<Overlooker>
+    suspend fun deleteOverlookerFromSurveillance(surveillanceUUID: String, overlookerUUID: String)
+
+    suspend fun getOverlookerForSurveillanceDevice(
+        surveillanceUUID: String,
+        overlookerUUID: String
+    ): Overlooker?
+
 
 }

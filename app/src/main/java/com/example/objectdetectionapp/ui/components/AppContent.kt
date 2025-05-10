@@ -47,7 +47,8 @@ fun AppContent() {
     val connectedSurveillanceUUID by mainViewModel.connectedSurveillanceUUID.collectAsState()
     val userData by mainViewModel.userData.collectAsState()
 
-    val showUIElements = currentRoute != "intro"
+    val showUIElements = currentRoute != "intro" && currentRoute != "mode_selection" &&
+    (currentRoute == null || !currentRoute.startsWith("overlooker_pair/"))
 
     if (showUIElements) {
         ModalNavigationDrawer(

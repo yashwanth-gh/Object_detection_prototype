@@ -21,6 +21,9 @@ class OverlookerHomeViewModel(
     private val _deviceData = MutableStateFlow<Resource<SurveillanceDevice>>(Resource.Loading())
     val deviceData: StateFlow<Resource<SurveillanceDevice>> = _deviceData.asStateFlow()
 
+    private val _isOverlookerValid = MutableStateFlow<Resource<Boolean>>(Resource.Loading())
+    val isOverlookerValid: StateFlow<Resource<Boolean>> = _isOverlookerValid.asStateFlow()
+
     init {
         viewModelScope.launch {
             repository.connectedSurveillanceUUID.collect { uuid ->
@@ -33,11 +36,25 @@ class OverlookerHomeViewModel(
         }
     }
 
+    fun checkOverlookerValidity(overlookerUUID: String, surveillanceUUID: String) {
+        viewModelScope.launch {
+            _isOverlookerValid.value = Resource.Loading()
+            val result = repository.isOverlookerPaired(surveillanceUUID, overlookerUUID)
+            _isOverlookerValid.value = result
+        }
+    }
+
     private fun getSurveillanceDeviceData(uuid: String) {
         viewModelScope.launch {
             _deviceData.value = Resource.Loading() // Set loading state
             val result = repository.fetchSurveillanceDevice(uuid)
             _deviceData.value = result // Update with the result (Success or Error)
+        }
+    }
+
+    fun clearLocalDataAndNavigateToModeSelection() {
+        viewModelScope.launch {
+            repository.clearUserData()
         }
     }
 }

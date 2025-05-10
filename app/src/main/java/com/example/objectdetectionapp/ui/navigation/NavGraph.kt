@@ -15,6 +15,7 @@ import com.example.objectdetectionapp.ui.shared.DetectionScreen
 import com.example.objectdetectionapp.ui.shared.ModeSelectionScreen
 import com.example.objectdetectionapp.ui.shared.UserProfileScreen
 import com.example.objectdetectionapp.ui.surveillance.CameraPreviewScreen
+import com.example.objectdetectionapp.ui.surveillance.ManageDevicesScreen
 import com.example.objectdetectionapp.ui.surveillance.SurveillanceScreen
 import com.example.objectdetectionapp.ui.userSignIn.IntroScreen
 
@@ -78,6 +79,16 @@ fun NavGraph(navController: NavHostController) {
             composable("user_profile") {
                 UserProfileScreen()
             }
+
+            composable(
+                "manage_devices/{uuid}",
+                arguments = listOf(navArgument("uuid") { type = NavType.StringType })
+            ) {
+                val uuid = it.arguments?.getString("uuid")
+                ManageDevicesScreen(uuid)
+            }
+
+
         }
     }
 }

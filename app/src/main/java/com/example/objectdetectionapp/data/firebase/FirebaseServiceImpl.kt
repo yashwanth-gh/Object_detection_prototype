@@ -22,7 +22,7 @@ class FirebaseServiceImpl : FirebaseService {
     private val database = FirebaseDatabase.getInstance().reference
     private val _tag = "FirebaseServiceImpl"
 
-    override suspend fun saveSurveillanceDevice(uuid: String, user:User) {
+    override suspend fun saveSurveillanceDevice(uuid: String, user: User) {
         try {
             // Generate the pairing code from the first 6 characters of the UUID (you can adjust this)
             val pairingCode = uuid.take(6)
@@ -76,7 +76,7 @@ class FirebaseServiceImpl : FirebaseService {
     override suspend fun addOverlookerToSurveillance(
         surveillanceUUID: String,
         overlookerUUID: String,
-        user:User
+        user: User
     ) {
         try {
             val path = database.child("surveillance_devices")
@@ -241,11 +241,13 @@ class FirebaseServiceImpl : FirebaseService {
             val snapshot = database.child("surveillance_devices").child(uuid).get().await()
             if (snapshot.exists()) {
                 val status = snapshot.child("status").getValue(String::class.java) ?: "unknown"
-                val pairingCode = snapshot.child("pairingCode").getValue(String::class.java) ?: "N/A"
+                val pairingCode =
+                    snapshot.child("pairingCode").getValue(String::class.java) ?: "N/A"
 
                 val userSnapshot = snapshot.child("user")
                 val user = User(
-                    username = userSnapshot.child("username").getValue(String::class.java) ?: "Unknown",
+                    username = userSnapshot.child("username").getValue(String::class.java)
+                        ?: "Unknown",
                     email = userSnapshot.child("email").getValue(String::class.java) ?: ""
                 )
 
@@ -273,5 +275,75 @@ class FirebaseServiceImpl : FirebaseService {
         }
     }
 
+    override suspend fun getOverlookersForSurveillance(surveillanceUUID: String): List<Overlooker> {
+        return try {
+            val snapshot = database.child("surveillance_devices")
+                .child(surveillanceUUID)
+                .child("overlookers")
+                .get()
+                .await()
 
+            val overlookers = mutableListOf<Overlooker>()
+            for (child in snapshot.children) {
+                val overlookerUUID = child.key ?: continue
+                val username = child.child("username").getValue(String::class.java)
+                val email = child.child("email").getValue(String::class.java)
+
+                if (username != null && email != null) {
+                    overlookers.add(
+                        Overlooker(
+                            uuid = overlookerUUID, // Include UUID
+                            username = username,
+                            email = email
+                        )
+                    )
+                }
+            }
+
+            overlookers
+        } catch (e: Exception) {
+            Log.e("FirebaseService", "Error fetching overlookers: ${e.message}")
+            emptyList()
+        }
+    }
+
+
+    override suspend fun deleteOverlookerFromSurveillance(
+        surveillanceUUID: String,
+        overlookerUUID: String
+    ) {
+        try {
+            database.child("surveillance_devices")
+                .child(surveillanceUUID)
+                .child("overlookers")
+                .child(overlookerUUID)
+                .removeValue()
+                .await()
+            Log.d(_tag, "Overlooker $overlookerUUID removed from surveillance $surveillanceUUID")
+        } catch (e: Exception) {
+            Log.e(_tag, "Error deleting overlooker: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun getOverlookerForSurveillanceDevice(
+        surveillanceUUID: String,
+        overlookerUUID: String
+    ): Overlooker? {
+        return try {
+            val snapshot = database.child("surveillance_devices")
+                .child(surveillanceUUID)
+                .child("overlookers")
+                .child(overlookerUUID)
+                .get()
+                .await()
+            snapshot.getValue(Overlooker::class.java)
+        } catch (e: Exception) {
+            Log.e(
+                _tag,
+                "Error fetching overlooker $overlookerUUID for $surveillanceUUID: ${e.message}"
+            )
+            null
+        }
+    }
 }

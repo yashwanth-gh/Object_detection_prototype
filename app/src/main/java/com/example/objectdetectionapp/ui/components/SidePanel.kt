@@ -160,6 +160,18 @@ private fun NavigationLinks(
         }
     )
 
+    // Manage Devices Button (Only for Surveillance Mode)
+    if (mode?.lowercase() == "surveillance") {
+        NavigationButton(
+            text = "Manage Devices",
+            icon = Icons.Filled.Settings, // Using Settings icon as a placeholder
+            onClick = {
+                navController.navigate("manage_devices/${uuid}")
+                onCloseDrawer()
+            }
+        )
+    }
+
     // Detections Button
     NavigationButton(
         text = "Detections",

@@ -1,5 +1,6 @@
 package com.example.objectdetectionapp.ui.overlooker
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,8 +52,55 @@ fun OverlookerHomeScreen(
         viewModel(factory = OverlookerHomeViewModelFactory(context))
 
     var navigateToDetectionScreen by remember { mutableStateOf(false) }
+    var shouldNavigateToModeSelection by remember { mutableStateOf(false) }
 
     val deviceDataResource by viewModel.deviceData.collectAsState(initial = Resource.Loading())
+    val isOverlookerValidResource by viewModel.isOverlookerValid.collectAsState(initial = Resource.Loading())
+
+    LaunchedEffect(Unit) {
+        viewModel.checkOverlookerValidity(overlookerUUID, surveillanceUUID)
+    }
+    when (isOverlookerValidResource) {
+        is Resource.Loading -> {
+            // Optionally show a loading indicator while checking validity
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator()
+                Text("Checking session...")
+            }
+            return@OverlookerHomeScreen // Prevent rendering the main screen yet
+        }
+        is Resource.Success -> {
+            val isValid = (isOverlookerValidResource as Resource.Success).data
+            if (!isValid) {
+                LaunchedEffect(Unit) {
+                    viewModel.clearLocalDataAndNavigateToModeSelection()
+                    shouldNavigateToModeSelection = true
+                }
+            }
+        }
+        is Resource.Error -> {
+            // Handle error during validity check (e.g., network issues)
+            // You might want to show an error message or retry
+            Log.e("OverlookerHomeScreen", "Error checking overlooker validity: ${(isOverlookerValidResource as Resource.Error).throwable.message}")
+            // For now, let's assume valid and proceed (you might want different behavior)
+        }
+    }
+
+    // Navigate back to mode selection if the overlooker is no longer valid
+    if (shouldNavigateToModeSelection) {
+        LaunchedEffect(Unit) {
+            navController.navigate("mode_selection") {
+                popUpTo("overlooker_home/{$overlookerUUID}/{$surveillanceUUID}") {
+                    inclusive = true
+                }
+            }
+        }
+        return@OverlookerHomeScreen // Prevent rendering the main screen
+    }
 
     Column(
         modifier = Modifier

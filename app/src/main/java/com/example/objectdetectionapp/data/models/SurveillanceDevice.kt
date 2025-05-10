@@ -10,5 +10,6 @@ data class SurveillanceDevice(
 
 data class Overlooker(
     val email: String = "",
-    val username: String = ""
+    val username: String = "",
+    val uuid: String = ""
 )
