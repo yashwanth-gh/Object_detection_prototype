@@ -73,5 +73,16 @@ class DetectionRepositoryImpl(
                 emit(Resource.Error<List<Detection>>(Throwable("Error fetching detections: ${error.message}")))
             }
             .flowOn(Dispatchers.IO)
+
+    override suspend fun deleteDetection(surveillanceUUID: String, detectionId: String): Flow<Resource<Void?>> = flow {
+        emit(Resource.Loading())
+        try {
+            firebaseService.deleteDetection(surveillanceUUID, detectionId)
+            emit(Resource.Success(null as Void?)) // Explicitly cast null to Void?
+        } catch (e: Exception) {
+            Log.e(_tag, "Error deleting detection: ${e.message}")
+            emit(Resource.Error(e))
+        }
+    }.flowOn(Dispatchers.IO)
 }
 

@@ -16,7 +16,7 @@ class DetectionViewModelFactory(private val context: Context) : ViewModelProvide
         val detectionRepository = DetectionRepositoryImpl(firebaseDataStorage, firebaseService, context)
         val repository = MainRepository(context, firebaseService)
         if (modelClass.isAssignableFrom(DetectionViewModel::class.java)) {
-            return DetectionViewModel(detectionRepository, repository) as T
+            return DetectionViewModel(context,detectionRepository, repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

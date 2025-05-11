@@ -8,4 +8,4 @@ import kotlinx.coroutines.flow.Flow
 interface DetectionRepository {
     suspend fun saveDetectionData(detection: Detection, imageBitmap: Bitmap?, surveillanceUUID:String): Flow<Resource<String>>
     suspend fun getDetectionsForDevice(surveillanceUUID: String): Flow<Resource<List<Detection>>>
-}
+    suspend fun deleteDetection(surveillanceUUID: String, detectionId: String): Flow<Resource<Void?>>}

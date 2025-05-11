@@ -6,7 +6,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.Toast
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.objectdetectionapp.data.models.Detection
@@ -17,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.InputStream
@@ -25,6 +28,7 @@ import java.net.URL
 
 
 class DetectionViewModel(
+    private val context: Context,
     private val detectionRepository: DetectionRepository,
     private val mainRepository: MainRepository
 ) : ViewModel() {
@@ -33,10 +37,22 @@ class DetectionViewModel(
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
+    private val _userMode = MutableStateFlow<String?>(null)
+    val userMode: StateFlow<String?> = _userMode
+    private val _userUUID = MutableStateFlow<String?>(null)
 
 
     init {
-        fetchDetections()
+        viewModelScope.launch {
+            combine(mainRepository.userMode, mainRepository.userUUID) { mode, uuid ->
+                _userMode.value = mode
+                _userUUID.value = uuid
+            }.collectLatest {
+                Log.d("DetectionVM", "Mode in combine: ${_userMode.value}")
+                Log.d("DetectionVM", "UUID in combine: ${_userUUID.value}")
+                fetchDetections()
+            }
+        }
     }
 
     private fun fetchDetections() {
@@ -149,6 +165,46 @@ class DetectionViewModel(
             }
         } ?: run {
             Toast.makeText(context, "Failed to insert media item", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun deleteDetection(detectionId: String?) {
+        viewModelScope.launch {
+            val currentUserUUID = _userUUID.value
+            Log.d("DetectionVM", "UUID:${currentUserUUID}")
+            Log.d("DetectionVM", "mode:${_userMode.value}")
+
+
+
+
+            currentUserUUID?.let { uuidToDelete ->
+                if (detectionId != null) {
+                    detectionRepository.deleteDetection(uuidToDelete, detectionId).collect { resource ->
+                        when (resource) {
+                            is Resource.Loading -> _isLoading.value = true
+                            is Resource.Success -> {
+                                _isLoading.value = false
+                                Toast.makeText(
+                                    context.applicationContext,
+                                    "Detection deleted successfully",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                fetchDetections() // Refresh the list
+                            }
+                            is Resource.Error -> {
+                                _isLoading.value = false
+                                Toast.makeText(
+                                    context.applicationContext,
+                                    "Failed to delete detection",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                    }
+                }
+            } ?: run {
+                Toast.makeText(context.applicationContext, "Surveillance UUID not available", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

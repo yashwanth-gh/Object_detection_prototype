@@ -47,18 +47,23 @@ import android.content.Context
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 
 
 @Composable
@@ -70,6 +75,7 @@ fun DetectionScreen() {
     )
     val detections by detectionViewModel.detections.collectAsState()
     val isLoading = detections.isEmpty() && detectionViewModel.isLoading.collectAsState().value
+    val userMode by detectionViewModel.userMode.collectAsState()
 
     var sortMostRecentFirst by remember { mutableStateOf(true) }
     val sortedDetections = remember(detections, sortMostRecentFirst) {
@@ -140,11 +146,12 @@ fun DetectionScreen() {
                     items(sortedDetections) { detection ->
                         DetectionCard(
                             detection = detection,
+                            userMode,
                             onDownloadClick = { imageUrl ->
-                                detectionViewModel.saveImageToGallery(
-                                    context,
-                                    imageUrl
-                                )
+                                detectionViewModel.saveImageToGallery(context, imageUrl)
+                            },
+                            onDeleteClick = {
+                                detectionViewModel.deleteDetection(detection.id)
                             }
                         )
                     }
@@ -158,7 +165,9 @@ fun DetectionScreen() {
 @Composable
 fun DetectionCard(
     detection: Detection,
-    onDownloadClick: (String?) -> Unit
+    userMode:String?,
+    onDownloadClick: (String?) -> Unit,
+    onDeleteClick: () -> Unit
 ) {
     val context = LocalContext.current
     val date = Date(detection.timestamp)
@@ -171,7 +180,7 @@ fun DetectionCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp, horizontal = 12.dp),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
@@ -182,26 +191,52 @@ fun DetectionCard(
             detection.imagePath?.let { imageUrl ->
                 val uri = Uri.parse(imageUrl)
 
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(uri)
-                        .crossfade(true)
-                        .size(Size.ORIGINAL)
-                        .build(),
-                    contentDescription = "Detection Image",
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable {
-                            val viewIntent = Intent(Intent.ACTION_VIEW).apply {
-                                setDataAndType(uri, "image/*")
-                                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                            }
-                            context.startActivity(viewIntent)
-                        },
-                    contentScale = ContentScale.Crop
-                )
+                        .clip(RoundedCornerShape(8.dp))
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(uri)
+                            .crossfade(true)
+                            .size(Size.ORIGINAL)
+                            .build(),
+                        contentDescription = "Detection Image",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable {
+                                val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(uri, "image/*")
+                                    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                }
+                                context.startActivity(viewIntent)
+                            },
+                        contentScale = ContentScale.Crop
+                    )
+
+                    if (userMode == "surveillance") {
+                        IconButton(
+                            onClick = onDeleteClick,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(top = 8.dp, end = 8.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                                    shape = RoundedCornerShape(8.dp)
+                                ),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete Detection",
+                                tint = Color.Red,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+                    }
+                }
+
             }
 
             Spacer(modifier = Modifier.height(8.dp))

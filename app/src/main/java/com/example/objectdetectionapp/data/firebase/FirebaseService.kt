@@ -31,5 +31,7 @@ interface FirebaseService {
         overlookerUUID: String
     ): Overlooker?
 
+    suspend fun deleteDetection(surveillanceUUID: String, detectionId: String)
+
 
 }

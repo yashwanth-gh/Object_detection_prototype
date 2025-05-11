@@ -199,8 +199,10 @@ class FirebaseServiceImpl : FirebaseService {
                                 width = boundingBoxData?.get("width")?.toInt() ?: 0,
                                 height = boundingBoxData?.get("height")?.toInt() ?: 0
                             )
+                            val uuid = childSnapshot.key ?: ""
                             detectionsList.add(
                                 Detection(
+                                    id = uuid,
                                     timestamp = timestamp,
                                     label = label,
                                     confidence = confidence,
@@ -344,6 +346,18 @@ class FirebaseServiceImpl : FirebaseService {
                 "Error fetching overlooker $overlookerUUID for $surveillanceUUID: ${e.message}"
             )
             null
+        }
+    }
+
+    override suspend fun deleteDetection(surveillanceUUID: String, detectionId: String) {
+        try {
+            database.child("surveillance_devices")
+                .child(surveillanceUUID).child("detections")
+                .child(detectionId).removeValue().await()
+            Log.d(_tag, "Detection with ID $detectionId deleted from $surveillanceUUID")
+        } catch (e: Exception) {
+            Log.e(_tag, "Error deleting detection $detectionId: ${e.message}")
+            throw e
         }
     }
 }

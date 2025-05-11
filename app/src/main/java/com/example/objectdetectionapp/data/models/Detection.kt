@@ -8,6 +8,7 @@ data class BoundingBox(
 )
 
 data class Detection(
+    val id: String? = null,
     val timestamp: Long,
     val label: String,
     val confidence: Float,
