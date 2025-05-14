@@ -8,11 +8,13 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.example.objectdetectionapp.data.firebase.FirebaseService
 import com.example.objectdetectionapp.data.models.Overlooker
 import com.example.objectdetectionapp.data.models.SurveillanceDevice
+import com.example.objectdetectionapp.data.models.SurveillanceSettings
 import com.example.objectdetectionapp.data.models.User
 import com.example.objectdetectionapp.utils.Resource
 import com.example.objectdetectionapp.utils.retryOperation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.concurrent.TimeUnit
 
 private val Context.dataStore by preferencesDataStore(name = "user_prefs")
 
@@ -25,7 +27,15 @@ class MainRepository(
     companion object {
         private val MODE_KEY = stringPreferencesKey("mode")  // "surveillance" or "overlooker"
         private val UUID_KEY = stringPreferencesKey("uuid")  // Stores UUID if mode = surveillance
-        private const val TAG = "UserPrefsRepo" // Add a TAG for Log messages
+        private val NOTIFICATION_INTERVAL_KEY = stringPreferencesKey("notification_interval") // ms
+        private val SAVE_INTERVAL_KEY = stringPreferencesKey("save_interval") // ms
+        private val SOUND_INTERVAL_KEY = stringPreferencesKey("sound_interval") // ms
+        private val EMAIL_INTERVAL_KEY = stringPreferencesKey("email_interval")
+        private val DEFAULT_NOTIFICATION_INTERVAL = TimeUnit.MINUTES.toMillis(3)
+        private val DEFAULT_SAVE_INTERVAL = TimeUnit.MINUTES.toMillis(3)
+        private val DEFAULT_SOUND_INTERVAL = TimeUnit.SECONDS.toMillis(10)
+        private val DEFAULT_EMAIL_INTERVAL = TimeUnit.MINUTES.toMillis(3)
+        private const val TAG = "UserPrefsRepo"
     }
 
     // Get saved mode
@@ -162,5 +172,33 @@ class MainRepository(
             preferences.remove(stringPreferencesKey("surveillance_uuid"))
         }
     }
+
+    suspend fun saveSurveillanceSettings(
+        notificationIntervalMs: Long,
+        saveIntervalMs: Long,
+        soundIntervalMs: Long,
+        emailIntervalMs: Long
+    ) {
+        context.dataStore.edit { prefs ->
+            prefs[NOTIFICATION_INTERVAL_KEY] = notificationIntervalMs.toString()
+            prefs[SAVE_INTERVAL_KEY] = saveIntervalMs.toString()
+            prefs[SOUND_INTERVAL_KEY] = soundIntervalMs.toString()
+            prefs[EMAIL_INTERVAL_KEY] = emailIntervalMs.toString()
+        }
+    }
+
+
+    // Load Settings
+    fun getSurveillanceSettings(): Flow<SurveillanceSettings> {
+        return context.dataStore.data.map { prefs ->
+            SurveillanceSettings(
+                notificationInterval = prefs[NOTIFICATION_INTERVAL_KEY]?.toLongOrNull() ?: DEFAULT_NOTIFICATION_INTERVAL,
+                saveInterval = prefs[SAVE_INTERVAL_KEY]?.toLongOrNull() ?: DEFAULT_SAVE_INTERVAL,
+                soundInterval = prefs[SOUND_INTERVAL_KEY]?.toLongOrNull() ?: DEFAULT_SOUND_INTERVAL,
+                emailInterval = prefs[EMAIL_INTERVAL_KEY]?.toLongOrNull() ?: DEFAULT_EMAIL_INTERVAL
+            )
+        }
+    }
+
 
 }

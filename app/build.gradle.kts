@@ -132,4 +132,8 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
 
     implementation("androidx.core:core-splashscreen:1.0.0")
+    implementation("com.google.firebase:firebase-functions-ktx")
+
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
 }

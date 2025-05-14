@@ -195,15 +195,18 @@ private fun NavigationLinks(
         }
     )
 
-    // Settings Button
-    NavigationButton(
-        text = "Settings",
-        icon = Icons.Filled.Settings,
-        onClick = {
-            navController.navigate("settings_screen") // Navigate directly
-            onCloseDrawer()
-        }
-    )
+// Settings Button - Only show for Surveillance Mode
+    if (mode?.lowercase() == "surveillance") {
+        NavigationButton(
+            text = "Settings",
+            icon = Icons.Filled.Settings,
+            onClick = {
+                navController.navigate("settings_screen")
+                onCloseDrawer()
+            }
+        )
+    }
+
 }
 
 @Composable

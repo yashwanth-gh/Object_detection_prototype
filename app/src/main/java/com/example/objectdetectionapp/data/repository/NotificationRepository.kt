@@ -1,8 +1,12 @@
 package com.example.objectdetectionapp.data.repository
 
+import android.graphics.Bitmap
 import android.util.Log
+import com.example.objectdetectionapp.data.firebase.EmailServices
 import com.example.objectdetectionapp.data.firebase.FCMService
 import com.example.objectdetectionapp.data.firebase.FirebaseService
+import com.example.objectdetectionapp.data.models.SurveillanceDevice
+import com.example.objectdetectionapp.tflite.EfficientDetLiteDetector
 
 class NotificationRepository(
     private val fcmService: FCMService,
@@ -57,4 +61,33 @@ class NotificationRepository(
             false
         }
     }
+
+    suspend fun sendEmailReportToOverlookers(
+        deviceData: SurveillanceDevice,
+        personDetections: List<EfficientDetLiteDetector.DetectionResult>,
+        image: Bitmap?
+    ) {
+        try {
+            val overlookersEmails = deviceData.overlookers.values.mapNotNull { it.email }
+
+            if (overlookersEmails.isEmpty()) {
+                Log.w("NotificationRepo", "No overlooker emails found in device data")
+                return
+            }
+
+            Log.w("NotificationRepo", "Attempting to send email")
+
+            EmailServices.sendEmail(
+                recipients = overlookersEmails,
+                deviceData = deviceData,
+                personDetections = personDetections,
+                image = image
+            )
+        } catch (e: Exception) {
+            Log.e("NotificationRepo", "Error sending email report: ${e.message}")
+        }
+    }
+
+
+
 }

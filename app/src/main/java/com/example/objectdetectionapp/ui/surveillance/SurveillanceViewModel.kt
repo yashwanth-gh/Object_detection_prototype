@@ -31,28 +31,48 @@ class SurveillanceViewModel(
     var surveillanceUUID: StateFlow<String?> = _surveillanceUUID.asStateFlow()
 
     private var lastNotificationTime: Long = 0L
-    private val notificationCoolDownDurationMillis = TimeUnit.MINUTES.toMillis(3)
+    private var notificationCoolDownDurationMillis = TimeUnit.MINUTES.toMillis(3)
 
     private var lastDetectionSaveTime: Long = 0L
-    private val detectionSaveCoolDownDurationMillis =
+    private var detectionSaveCoolDownDurationMillis =
         TimeUnit.MINUTES.toMillis(3) // Save every 10 minutes
 
     private var lastPersonSoundTime: Long = 0L
     private var personSoundCoolDownDurationMillis = TimeUnit.SECONDS.toMillis(10)
 
+    private var lastEmailSentTime: Long = 0L
+    private var emailCoolDownMillis = TimeUnit.MINUTES.toMillis(3)
+
     private val _deviceData = MutableStateFlow<Resource<SurveillanceDevice>>(Resource.Loading())
     val deviceData: StateFlow<Resource<SurveillanceDevice>> = _deviceData.asStateFlow()
 
     init {
+        // Collect UUID in one coroutine
         viewModelScope.launch {
             repository.userUUID.collect { uuid ->
                 if (uuid != null) {
                     _surveillanceUUID.value = uuid
                     getSurveillanceDeviceData(uuid)
                 }
-                Log.d("SurveillanceVM", "UUID: $uuid")
+                Log.d("SurveillanceVM", "UUID Collected in Init: $uuid")
             }
         }
+
+        // Collect settings in a separate coroutine
+        viewModelScope.launch {
+            Log.d("SurveillanceVM", "⏳ Attempting to collect surveillance settings...")
+            repository.getSurveillanceSettings().collect { settings ->
+                notificationCoolDownDurationMillis = settings.notificationInterval
+                detectionSaveCoolDownDurationMillis = settings.saveInterval
+                personSoundCoolDownDurationMillis = settings.soundInterval
+                emailCoolDownMillis = settings.emailInterval
+                Log.d(
+                    "SurveillanceVM",
+                    "⏱ Settings Loaded - Notify: ${settings.notificationInterval}, Save: ${settings.saveInterval}, Sound: ${settings.soundInterval}, Email: ${settings.emailInterval}"
+                )
+            }
+        }
+
     }
 
     private fun getSurveillanceDeviceData(uuid: String) {
@@ -94,6 +114,12 @@ class SurveillanceViewModel(
         if (currentTime - lastDetectionSaveTime >= detectionSaveCoolDownDurationMillis) {
             lastDetectionSaveTime = currentTime
             saveDetection(personDetections, currentFrame)
+        }
+
+        if (currentTime - lastEmailSentTime >= emailCoolDownMillis) {
+            Log.w("SurveillanceVM", "Attempting to send email calling notification repo")
+            lastEmailSentTime = currentTime
+            sendEmailReport(personDetections, currentFrame)
         }
     }
 
@@ -176,5 +202,23 @@ class SurveillanceViewModel(
             }
         }
     }
+
+    private fun sendEmailReport(
+        personDetections: List<EfficientDetLiteDetector.DetectionResult>,
+        currentFrame: Bitmap?
+    ) {
+        val resource = deviceData.value
+        if (resource is Resource.Success) {
+            val deviceData = resource.data
+            viewModelScope.launch {
+                notificationRepository.sendEmailReportToOverlookers(
+                    deviceData,
+                    personDetections,
+                    image = currentFrame
+                )
+            }
+        }
+    }
+
 }
 

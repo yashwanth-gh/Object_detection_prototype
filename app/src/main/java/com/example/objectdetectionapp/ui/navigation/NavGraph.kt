@@ -13,6 +13,7 @@ import com.example.objectdetectionapp.ui.overlooker.OverlookerHomeScreen
 import com.example.objectdetectionapp.ui.overlooker.OverlookerPairScreen
 import com.example.objectdetectionapp.ui.shared.DetectionScreen
 import com.example.objectdetectionapp.ui.shared.ModeSelectionScreen
+import com.example.objectdetectionapp.ui.shared.SettingsScreen
 import com.example.objectdetectionapp.ui.shared.UserProfileScreen
 import com.example.objectdetectionapp.ui.surveillance.CameraPreviewScreen
 import com.example.objectdetectionapp.ui.surveillance.ManageDevicesScreen
@@ -78,6 +79,10 @@ fun NavGraph(navController: NavHostController) {
 
             composable("user_profile") {
                 UserProfileScreen()
+            }
+
+            composable("settings_screen") {
+                SettingsScreen()
             }
 
             composable(

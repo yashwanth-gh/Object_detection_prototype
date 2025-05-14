@@ -34,4 +34,5 @@ interface FirebaseService {
     suspend fun deleteDetection(surveillanceUUID: String, detectionId: String)
 
 
+
 }
