@@ -32,6 +32,10 @@ interface FirebaseService {
     ): Overlooker?
 
     suspend fun deleteDetection(surveillanceUUID: String, detectionId: String)
+    suspend fun updateNightMode(surveillanceUUID: String, nightMode: Boolean)
+    fun observeNightMode(surveillanceUUID: String): Flow<Boolean>
+    suspend fun updateStartCamera(surveillanceUUID: String, startCamera: Boolean)
+    fun observeStartCamera(surveillanceUUID: String): Flow<Boolean>
 
 
 

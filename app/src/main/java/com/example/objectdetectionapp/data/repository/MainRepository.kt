@@ -200,5 +200,14 @@ class MainRepository(
         }
     }
 
+    suspend fun updateNightMode(uuid: String, enabled: Boolean) {
+        firebaseService.updateNightMode(uuid, enabled)
+    }
 
+    suspend fun updateStartCamera(surveillanceUUID: String, enabled: Boolean) {
+        firebaseService.updateStartCamera(surveillanceUUID, enabled)
+    }
+    fun observeStartCamera(surveillanceUUID: String): Flow<Boolean> {
+        return firebaseService.observeStartCamera(surveillanceUUID)
+    }
 }

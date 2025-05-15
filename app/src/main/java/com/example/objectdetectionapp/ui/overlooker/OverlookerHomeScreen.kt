@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +18,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,8 +59,12 @@ fun OverlookerHomeScreen(
     val deviceDataResource by viewModel.deviceData.collectAsState(initial = Resource.Loading())
     val isOverlookerValidResource by viewModel.isOverlookerValid.collectAsState(initial = Resource.Loading())
 
+    val nightMode by viewModel.nightMode.collectAsState()
+    val startCameraRemotely by viewModel.startCameraRemotely.collectAsState()
+
     LaunchedEffect(Unit) {
         viewModel.checkOverlookerValidity(overlookerUUID, surveillanceUUID)
+        viewModel.listenForNightModeAndStartCameraChangesToUpdateTheSwitch(surveillanceUUID)
     }
     when (isOverlookerValidResource) {
         is Resource.Loading -> {
@@ -136,6 +142,38 @@ fun OverlookerHomeScreen(
 
                 // Extract Overlooker Info using UUID
                 val overlookerInfo = deviceData.overlookers[overlookerUUID]
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text("🌙 Vigilant Night Monitoring", modifier = Modifier.weight(1f),fontSize = 13.sp)
+                    Switch(
+                        checked = nightMode,
+                        onCheckedChange = { isOn ->
+                            viewModel.setNightMode(surveillanceUUID, isOn)
+                        }
+                    )
+                }
+
+
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("🎦 Turn Surveillance Camera ON/OFF", Modifier.weight(1f), fontSize = 13.sp)
+                    Switch(
+                        checked = startCameraRemotely,
+                        onCheckedChange = { isOn ->
+                            viewModel.setStartCamera(surveillanceUUID, isOn)
+                        }
+                    )
+                }
 
                 Button(
                     onClick = { navigateToDetectionScreen = true },

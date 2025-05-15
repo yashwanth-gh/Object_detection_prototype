@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,8 +21,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,6 +64,24 @@ fun SurveillanceScreen(
 
     var showPairingCode by remember { mutableStateOf(false) }
     var navigateToCamera by remember { mutableStateOf(false) }
+    val nightMode by viewModel.nightMode.collectAsState()
+
+    val startCameraRemotely by viewModel.goToCameraPreviewScreen.collectAsState()
+
+    LaunchedEffect(uuid) {
+        if (uuid != null) {
+            viewModel.observeStartCamera(uuid)
+            viewModel.listenForNightModeChangesToUpdateTheSwitch(uuid)
+        }
+    }
+
+    LaunchedEffect(startCameraRemotely) {
+        if (startCameraRemotely) {
+            navigateToCamera = true
+        }
+    }
+
+
 
     Column(
         modifier = Modifier
@@ -94,6 +115,24 @@ fun SurveillanceScreen(
 
             is Resource.Success -> {
                 val deviceData = (deviceDataResource as Resource.Success).data
+
+                // Toggle row:
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text("🌙 Night Vision", modifier = Modifier.weight(1f))
+                    Switch(
+                        checked = nightMode,
+                        onCheckedChange = { isOn ->
+                            uuid?.let { viewModel.setNightMode(it, isOn) }
+                        }
+                    )
+                }
+
 
                 Button(
                     onClick = { navigateToCamera = true },

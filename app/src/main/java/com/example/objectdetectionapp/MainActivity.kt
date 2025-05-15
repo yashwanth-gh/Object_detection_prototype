@@ -22,6 +22,8 @@ class MainActivity : ComponentActivity() {
 
     // Register for the notification permission request
     private lateinit var notificationPermissionLauncher: ActivityResultLauncher<String>
+    private lateinit var audioPermissionLauncher: ActivityResultLauncher<String>
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +45,17 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        audioPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                Toast.makeText(this, "🎙️ Audio permission granted!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "🎙️ Audio permission denied.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+
         // Request notification permission for Android 13 and above
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
@@ -52,6 +65,12 @@ class MainActivity : ComponentActivity() {
                 // Request the permission
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
 
         installSplashScreen()

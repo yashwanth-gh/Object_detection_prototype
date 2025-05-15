@@ -70,7 +70,7 @@ fun NavGraph(navController: NavHostController) {
             }
 
             composable("camera_preview_screen") {
-                CameraPreviewScreen()
+                CameraPreviewScreen(navController)
             }
 
             composable("detections_screen") {

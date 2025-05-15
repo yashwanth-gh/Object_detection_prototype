@@ -1,6 +1,7 @@
 package com.example.objectdetectionapp.ui.surveillance
 
 
+import android.Manifest
 import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -17,10 +18,18 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import android.graphics.*
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.objectdetectionapp.tflite.BoundingBoxOverlay
 import com.example.objectdetectionapp.tflite.EfficientDetLiteDetector
+import com.example.objectdetectionapp.ui.components.NavigateWithPermissionAndLoading
 import com.example.objectdetectionapp.utils.processImageProxy
 import java.io.ByteArrayOutputStream
 
@@ -134,16 +143,45 @@ fun ImageProxy.toBitmap(): Bitmap {
 
 
 @Composable
-fun CameraPreviewScreen() {
+fun CameraPreviewScreen(
+    navController: NavController
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val viewModel: SurveillanceViewModel =
         viewModel(factory = SurveillanceViewModelFactory(context)) // Get ViewModel
 
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    var navigateToHome by remember { mutableStateOf(false) }
     val objectDetector = remember {
         EfficientDetLiteDetector(context) // Use EfficientDetLiteDetector
     }
+    val surveillanceUUID by viewModel.surveillanceUUID.collectAsState()
+    val goToSurveillanceScreen by viewModel.goToSurveillanceHome.collectAsState()
+
+
+    LaunchedEffect(surveillanceUUID) {
+        if (!surveillanceUUID.isNullOrBlank()) {
+            viewModel.observeNightMode(surveillanceUUID)
+            viewModel.observeStartCamera(surveillanceUUID)
+        }
+    }
+    LaunchedEffect(goToSurveillanceScreen) {
+        if (goToSurveillanceScreen) {
+            navigateToHome = true
+        }
+    }
+
+    DisposableEffect(surveillanceUUID) {
+        if (!surveillanceUUID.isNullOrBlank()) {
+            viewModel.startObservingNightMode(surveillanceUUID!!)
+        }
+        onDispose {
+            viewModel.stopObservingNightMode()
+        }
+    }
+
+
     val detectionResults =
         remember { mutableStateListOf<EfficientDetLiteDetector.DetectionResult>() } // Update the result type
 
@@ -179,13 +217,13 @@ fun CameraPreviewScreen() {
 
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
             cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(
+            val camera = cameraProvider.bindToLifecycle(
                 lifecycleOwner,
                 cameraSelector,
                 preview,
                 imageAnalysis
             )
-
+            viewModel.setCameraControl(camera.cameraControl)
             previewView
         }
     )
@@ -205,4 +243,11 @@ fun CameraPreviewScreen() {
             }
         )
     }
+
+    NavigateWithPermissionAndLoading(
+        shouldNavigate = navigateToHome,
+        onNavigated = { navigateToHome = false },
+        destination = "surveillance/${surveillanceUUID}/surveillance",
+        navController = navController
+    )
 }

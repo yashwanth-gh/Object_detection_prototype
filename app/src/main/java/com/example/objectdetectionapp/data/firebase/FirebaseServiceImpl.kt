@@ -34,7 +34,9 @@ class FirebaseServiceImpl : FirebaseService {
                 "user" to mapOf(
                     "username" to user.username,
                     "email" to user.email
-                )
+                ),
+                "nightMode" to false,
+                "startCamera" to false
             )
             database.child("surveillance_devices")
                 .child(uuid)
@@ -252,6 +254,8 @@ class FirebaseServiceImpl : FirebaseService {
                         ?: "Unknown",
                     email = userSnapshot.child("email").getValue(String::class.java) ?: ""
                 )
+                val nightMode = snapshot.child("nightMode").getValue(Boolean::class.java) ?: false
+                val startCamera = snapshot.child("startCamera").getValue(Boolean::class.java) ?: false
 
                 val overlookersMap = mutableMapOf<String, Overlooker>()
                 val overlookersSnapshot = snapshot.child("overlookers")
@@ -266,7 +270,9 @@ class FirebaseServiceImpl : FirebaseService {
                     pairingCode = pairingCode,
                     status = status,
                     user = user,
-                    overlookers = overlookersMap
+                    overlookers = overlookersMap,
+                    nightMode = nightMode,
+                    startCamera = startCamera
                 )
             } else {
                 null
@@ -361,5 +367,64 @@ class FirebaseServiceImpl : FirebaseService {
         }
     }
 
+    override suspend fun updateNightMode(surveillanceUUID: String, nightMode: Boolean) {
+        try {
+            database.child("surveillance_devices")
+                .child(surveillanceUUID)
+                .child("nightMode")
+                .setValue(nightMode) // Set the boolean value directly
+                .await()
+            Log.d(_tag, "Night mode updated to $nightMode for $surveillanceUUID")
+        } catch (e: Exception) {
+            Log.e(_tag, "Failed to update night mode: ${e.message}")
+            throw e
+        }
+    }
+
+    override fun observeNightMode(surveillanceUUID: String): Flow<Boolean> = callbackFlow {
+        val nightModeRef = database
+            .child("surveillance_devices")
+            .child(surveillanceUUID)
+            .child("nightMode")
+
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val value = snapshot.getValue(Boolean::class.java)
+                trySend(value ?: false).isSuccess // Emit the boolean value directly
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e(_tag, "Night mode listener cancelled: ${error.message}")
+            }
+        }
+
+        nightModeRef.addValueEventListener(listener)
+        awaitClose { nightModeRef.removeEventListener(listener) }
+    }
+
+    override suspend fun updateStartCamera(surveillanceUUID: String, startCamera: Boolean) {
+        database.child("surveillance_devices")
+            .child(surveillanceUUID)
+            .child("startCamera")
+            .setValue(startCamera)
+            .await()
+        Log.d(_tag, "startCamera updated to $startCamera for $surveillanceUUID")
+    }
+
+    override fun observeStartCamera(surveillanceUUID: String): Flow<Boolean> = callbackFlow {
+        val ref = database.child("surveillance_devices")
+            .child(surveillanceUUID)
+            .child("startCamera")
+        val listener = object : ValueEventListener {
+            override fun onDataChange(s: DataSnapshot) {
+                trySend(s.getValue(Boolean::class.java) ?: false)
+            }
+            override fun onCancelled(e: DatabaseError) {
+                Log.e(_tag, "startCamera listener cancelled: ${e.message}")
+            }
+        }
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
 
 }
